@@ -48,9 +48,9 @@ function App() {
       }
       formData.append("toVerify", toVerify); // Include Information to be verified
 
-      const response = await axios.post("http://127.0.0.1:5000/process", formData, {
+      const response = await axios.post("https://veriref-server/process", formData, {
         headers: {
-          "Access-Control-Allow-Origin": "http://127.0.0.1:5000/process",
+          "Access-Control-Allow-Origin": "https://veriref-server/",
           "Content-Type": "multipart/form-data",
         },
       });
