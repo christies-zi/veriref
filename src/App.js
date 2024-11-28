@@ -3,6 +3,7 @@ import axios from "axios";
 import "./styles/App.css";
 
 function App() {
+  const BACKEND_SERVER = process.env.REACT_APP_BACKEND_SERVER;
   const [sourceFileInput, setSourceFileInput] = useState(null); // Stores the uploaded PDF file
   const [sourceTextInput, setSourceTextInput] = useState(""); // Stores plain text input
   const [toVerify, setToVerify] = useState(""); // Second input
@@ -48,9 +49,9 @@ function App() {
       }
       formData.append("toVerify", toVerify); // Include Information to be verified
 
-      const response = await axios.post("https://veriref-server/process", formData, {
+      const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
-          "Access-Control-Allow-Origin": "https://veriref-server/",
+          "Access-Control-Allow-Origin": BACKEND_SERVER,
           "Content-Type": "multipart/form-data",
         },
       });
