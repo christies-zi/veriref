@@ -76,7 +76,7 @@ function App() {
       let types = [];
       let explanations = [];
       let sentences = [];
-      response.data.claims.forEach(function(element) {
+      response.data.claims.forEach(function (element) {
         claimsLoc.push(element.claim);
         answers.push(element.answer);
         types.push(element.classification);
@@ -102,22 +102,48 @@ function App() {
     return 'lightyellow';
   };
 
+  const getExplanationInfo = (type) => {
+    if (type === 1) return "Based only on the input text explain why the following claim is correct.";
+    if (type === 2) return "Based only on the input text explain why the following claim is incorrect.";
+    return "Based only on the input text explain why it is impossible to say whether following claim is correct or incorrect.";
+  };
+
+  const getReferenceInfo = (type, i) => {
+    if (type === 1)
+      return <><p>Reference sentences:
+        <span className="info-icon">i
+          <span className="tooltip">
+            Based only on the input text which specific setences from this text support the following claim? Output only enumerated sentences without any extra information.
+          </span>
+        </span>
+      </p><p>{claimsSentences[i].toString()}</p></>
+    if (type === 2)
+      return <><p>Reference sentences:
+        <span className="info-icon">i
+          <span className="tooltip">
+            Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
+          </span>
+        </span>
+      </p><p>{claimsSentences[i].toString()}</p></>
+    return <></>;
+  };
+
   return (
     <div className="app-container">
       <h1>Veriref</h1>
 
       <div className="input-group">
-          <label htmlFor="toVerify" className="input-label">
-            Information to Verify (Text):
-          </label>
-          <textarea
-            placeholder="Enter information to be verified"
-            value={toVerify}
-            onChange={handleToVerifyInput}
-            className="input-textarea"
-            rows="4"
-          />
-        </div>
+        <label htmlFor="toVerify" className="input-label">
+          Information to Verify (Text):
+        </label>
+        <textarea
+          placeholder="Enter information to be verified"
+          value={toVerify}
+          onChange={handleToVerifyInput}
+          className="input-textarea"
+          rows="4"
+        />
+      </div>
 
       <div className="input-section">
         <div className="input-group">
@@ -151,20 +177,36 @@ function App() {
 
       {shortAnswer && (
         <div className="output-section">
-          <h3>The input information can be split into the following claims:</h3>
+          <h3>The input information can be split into the following claims:
+            <span className="info-icon">i
+              <span className="tooltip">
+                Identify all the separate claims or facts in the information to be verified. Output only enumerated claims and facts without any extra information.
+              </span>
+            </span>
+          </h3>
         </div>
       )}
 
       {claims.map((claim, i) => (
-          <div className="output-section" style={{ backgroundColor: getBackgroundColor(claimsTypes[i]) }} key={`claim-${i}`}>
-            <h3>{claim}</h3>
-            <div>{claimsAnswers[i]}</div>
-            <p>Explanation: {claimsExplanations[i]}</p>
-            <p>Reference sentences:</p>
-            <p>{claimsSentences[i].toString()}</p>
+        <div className="output-section" style={{ backgroundColor: getBackgroundColor(claimsTypes[i]) }} key={`claim-${i}`}>
+          <h3>{claim}</h3>
+          <div>{claimsAnswers[i]}
+            <span className="info-icon">i
+              <span className="tooltip">
+                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+              </span>
+            </span>
           </div>
-          ))}
-
+          <p>Explanation:
+            <span className="info-icon">i
+              <span className="tooltip">
+                {getExplanationInfo(claimsTypes[i])}
+              </span>
+            </span>{claimsExplanations[i]}
+          </p>
+          {getReferenceInfo(claimsTypes[i], i)}
+        </div>
+      ))}
 
     </div>
   );
