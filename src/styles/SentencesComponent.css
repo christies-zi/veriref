@@ -1,0 +1,45 @@
+.claim-section {
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.claim-header {
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+}
+
+.dropdown-arrow {
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+    /* Rotate the arrow when expanded */
+}
+
+.claim-details {
+    margin-top: 8px;
+    padding-left: 16px;
+}
+
+.output-section {
+    margin: 8px 0;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.output-section.explanation {
+    background-color: #e8f5e9;
+    /* Light green for explanation */
+}
+
+.output-section.answer {
+    background-color: #e3f2fd;
+    /* Light blue for answer */
+}
