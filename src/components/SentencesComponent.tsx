@@ -21,6 +21,9 @@ const SentencesComponent = ({ sentences }) => {
     new Array(sentences.length).fill(false)
   );
 
+  const inCorrectClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 2).length);
+  const notGivenClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 3).length);
+
   const toggleExpand = (index) => {
     const newExpandedClaims = [...expandedClaims];
     newExpandedClaims[index] = !newExpandedClaims[index];
@@ -39,8 +42,24 @@ const SentencesComponent = ({ sentences }) => {
     return "Based only on the input text explain why it is impossible to say whether following claim is correct or incorrect.";
   };
 
+  const getMessage = (incorrectCnt, cannotSayCnt) => {
+    return <>
+      {incorrectCnt > 0 && (
+        <span style={{ color: 'darkred' }}>{incorrectCnt} errors detected</span>
+      )}
+      {incorrectCnt > 0 && cannotSayCnt > 0 && ', '}
+      {cannotSayCnt > 0 && (
+        <span style={{ color: 'orange' }}>
+          Could not check {cannotSayCnt} claims
+        </span>
+      )}
+      {incorrectCnt === 0 && cannotSayCnt === 0 && (
+        <span style={{ color: 'darkgreen' }}>No errors detected</span>
+      )}
+    </>
+  };
+
   const getReferenceInfo = (type, references) => {
-    console.log(sentences)
     if (type === 1)
       return <><p>Reference sentences:
         <span className="info-icon">i
@@ -70,6 +89,7 @@ const SentencesComponent = ({ sentences }) => {
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
             <p>{sentence.sentence}</p>
+            <div style={{alignContent: 'right'}}>{getMessage(inCorrectClaimsCnts[i], notGivenClaimsCnts[i])}</div>
             <span className={`dropdown-arrow${expandedClaims[i] ? '.open' : ''}`}>
               ▼
             </span>
