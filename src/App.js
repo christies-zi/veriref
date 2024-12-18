@@ -14,6 +14,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [claims, setClaims] = useState([]);
   const [claimsAnswers, setClaimsAnswers] = useState([]);
+  const [claimsTypes, setClaimsTypes] = useState([]);
   const [claimsExplanations, setClaimsExplanations] = useState([]);
   const [claimsSentences, setClaimsSentences] = useState([]);
 
@@ -48,6 +49,7 @@ function App() {
     setClaimsAnswers([]);
     setClaimsExplanations([]);
     setClaimsSentences([]);
+    setClaimsTypes([]);
 
     try {
       const formData = new FormData();
@@ -65,29 +67,39 @@ function App() {
         },
       });
 
+      console.log(response.data);
+
       setShortAnswer(response.data.shortAnswer);
       setExplanation(response.data.explanation);
-      console.log(response.data.claims);
       let claimsLoc = [];
       let answers = [];
+      let types = [];
       let explanations = [];
       let sentences = [];
       response.data.claims.forEach(function(element) {
-        claimsLoc.push(element[0]);
-        answers.push(element[1]);
-        explanations.push(element[2]);
-        sentences.push(element[3]);
+        claimsLoc.push(element.claim);
+        answers.push(element.answer);
+        types.push(element.classification);
+        explanations.push(element.explanation);
+        sentences.push(element.references);
       });
 
       setClaims(claimsLoc);
       setClaimsAnswers(answers);
       setClaimsExplanations(explanations);
       setClaimsSentences(sentences);
+      setClaimsTypes(types);
     } catch (error) {
       console.error("Error processing inputs:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getBackgroundColor = (type) => {
+    if (type === 1) return 'lightgreen';
+    if (type === 2) return 'lightcoral';
+    return 'lightyellow';
   };
 
   return (
@@ -144,7 +156,7 @@ function App() {
       )}
 
       {claims.map((claim, i) => (
-          <div className="output-section">
+          <div className="output-section" style={{ backgroundColor: getBackgroundColor(claimsTypes[i]) }} key={`claim-${i}`}>
             <h3>{claim}</h3>
             <div>{claimsAnswers[i]}</div>
             <p>Explanation: {claimsExplanations[i]}</p>
