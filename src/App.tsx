@@ -6,35 +6,29 @@ import SentencesComponent, {Sentence} from "./components/SentencesComponent";
 
 function App() {
 
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
-  const [sourceFileInput, setSourceFileInput] = useState(null); // Stores the uploaded PDF file
-  const [sourceTextInput, setSourceTextInput] = useState(""); // Stores plain text input
-  const [toVerify, setToVerify] = useState(""); // Second input
+  const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
+  const [textInput, setTextInput] = useState(""); // Stores plain text input
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
 
-  const handleFileUpload = (e) => {
+  const handleFileInput = (e) => {
     const file = e.target.files[0];
-    setSourceFileInput(file); // Save the uploaded file
-    setSourceTextInput(""); // Clear text input (only one input type allowed)
+    setFileInput(file); // Save the uploaded file
+    setTextInput(""); // Clear text input (only one input type allowed)
     setErrorMessage("");
   };
 
-  const handlesourceTextInput = (e) => {
-    setSourceTextInput(e.target.value); // Save the plain text
-    setSourceFileInput(null); // Clear file input (only one input type allowed)
-    setErrorMessage("");
-  };
-
-  const handleToVerifyInput = (e) => {
-    setToVerify(e.target.value); // Save the plain text // Clear file input (only one input type allowed)
+  const handlTextInput = (e) => {
+    setTextInput(e.target.value); // Save the plain text
+    setFileInput(null); // Clear file input (only one input type allowed)
     setErrorMessage("");
   };
 
   const handleSubmit = async () => {
-    if ((!sourceFileInput && !sourceTextInput) || !toVerify.trim()) {
+    if (!fileInput && !textInput) {
       setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
       return;
     }
@@ -43,19 +37,18 @@ function App() {
 
     try {
       const formData = new FormData();
-      if (sourceFileInput) {
-        formData.append("file", sourceFileInput); // Include the uploaded file
-      } else if (sourceTextInput) {
-        formData.append("sourceTextInput", sourceTextInput); // Include the plain text
+      if (fileInput) {
+        formData.append("file", fileInput); // Include the uploaded file
+      } else if (textInput) {
+        formData.append("textInput", textInput); // Include the plain text
       }
-      formData.append("toVerify", toVerify); // Include Information to be verified
-
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
           "Access-Control-Allow-Origin": BACKEND_SERVER,
           "Content-Type": "multipart/form-data",
         },
       });
+      console.log(response.data.sentences);
       setSentences(response.data.sentences);
 
     } catch (error) {
@@ -69,35 +62,22 @@ function App() {
     <div className="app-container">
       <h1>Veriref</h1>
 
-      <div className="input-group">
-        <label htmlFor="toVerify" className="input-label">
-          Information to Verify (Text):
-        </label>
-        <textarea
-          placeholder="Enter information to be verified"
-          value={toVerify}
-          onChange={handleToVerifyInput}
-          className="input-textarea"
-          rows={4}
-        />
-      </div>
-
       <div className="input-section">
         <div className="input-group">
           <label htmlFor="fileUpload" className="input-label">
-            Source/Reference (Upload PDF or Enter URL or Text):
+            Information to be Verified (Upload PDF or Enter Text):
           </label>
           <input
             type="file"
             accept=".pdf"
             id="fileUpload"
-            onChange={handleFileUpload}
+            onChange={handleFileInput}
             className="input-file"
           />
           <textarea
-            placeholder="Or enter plain text or URL her"
-            value={sourceTextInput}
-            onChange={handlesourceTextInput}
+            placeholder="Or enter plain text"
+            value={textInput}
+            onChange={handlTextInput}
             className="input-textarea"
             rows={4}
           />
