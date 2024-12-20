@@ -22,7 +22,7 @@ const SentencesComponent = ({ sentences }) => {
   );
 
   const inCorrectClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 2).length);
-  const notGivenClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 3).length);
+  const notGivenClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 3 || c.type === 4).length);
 
   const toggleExpand = (index) => {
     const newExpandedClaims = [...expandedClaims];
@@ -89,7 +89,7 @@ const SentencesComponent = ({ sentences }) => {
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
             <p>{sentence.sentence}</p>
-            <div style={{alignContent: 'right'}}>{getMessage(inCorrectClaimsCnts[i], notGivenClaimsCnts[i])}</div>
+            <div style={{ alignContent: 'right' }}>{getMessage(inCorrectClaimsCnts[i], notGivenClaimsCnts[i])}</div>
             <span className={`dropdown-arrow${expandedClaims[i] ? '.open' : ''}`}>
               ▼
             </span>
@@ -101,18 +101,21 @@ const SentencesComponent = ({ sentences }) => {
                 <div className="output-section" style={{ backgroundColor: getBackgroundColor(claim.type) }} key={`claim-${i}-${j}`}>
                   <p>{claim.claim}</p>
                   <p>{claim.answer}
-                    <span className="info-icon">i
-                      <span className="tooltip">
-                        Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                    {claim.type !== 4 &&
+                      <span className="info-icon">i
+                        <span className="tooltip">
+                          Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                        </span>
                       </span>
-                    </span>
+                    }
                   </p>
                   <p>Explanation:
-                    <span className="info-icon">i
-                      <span className="tooltip">
-                        {getExplanationInfo(claim.type)}
-                      </span>
-                    </span>{claim.explanation}
+                    {claim.type !== 4 &&
+                      <span className="info-icon">i
+                        <span className="tooltip">
+                          {getExplanationInfo(claim.type)}
+                        </span>
+                      </span>}{claim.explanation}
                   </p>
                   {getReferenceInfo(claim.type, claim.references)}
                 </div>
