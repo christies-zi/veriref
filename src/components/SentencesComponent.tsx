@@ -15,26 +15,48 @@ export type Sentence = {
   claims: Array<Claim>
 }
 
-const SentencesComponent = ({ display, sentences }) => {
+interface SentencesComponentProps {
+  display: boolean;
+  sentences: Sentence[];
+}
+
+const SentencesComponent: React.FC<SentencesComponentProps> = ({ display, sentences }) => {
+  const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [expandedClaims, setExpandedClaims] = useState<Array<boolean>>(
     new Array(sentences.length).fill(false)
   );
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const filteredSentences = sentences.filter((sentence) =>
-    sentence.sentence.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  const filteredSentences = sentences.filter((sentence) => {
+    const matchesSearch = sentence.sentence.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+    const matchesType = selectedTypes.includes(1)
+      ? sentence.claims.every((claim) => claim.type === 1)
+      : selectedTypes.length === 0 ||
+      sentence.claims.some((claim) => selectedTypes.includes(claim.type));
+    return matchesSearch && matchesType;
+  }
   );
-
-  const inCorrectClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 2).length);
-  const notGivenClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 3 || c.type === 4).length);
+  const handleTypeChange = (type) => {
+    setSelectedTypes((prevSelected) => {
+      if (type === 1) {
+        return prevSelected.includes(1) ? [] : [1];
+      } else {
+        if (prevSelected.includes(type)) {
+          return prevSelected.filter((t) => t !== type);
+        } else {
+          return [...prevSelected.filter((t) => t !== 1), type];
+        }
+      }
+    });
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300); // Delay of 300ms
+    }, 300);
 
     return () => {
-      clearTimeout(handler); // Clear timeout if user keeps typing
+      clearTimeout(handler);
     };
   }, [searchTerm]);
 
@@ -56,7 +78,13 @@ const SentencesComponent = ({ display, sentences }) => {
     return "Based only on the input text explain why it is impossible to say whether following claim is correct or incorrect.";
   };
 
-  const getMessage = (incorrectCnt, cannotSayCnt) => {
+  const countInCorrect = (claims : Array<Claim>) => claims.filter((c) => c.type === 2).length;
+  const countNotGiven = (claims : Array<Claim>) => claims.filter((c) => c.type === 3 || c.type === 4).length;
+
+  const getMessage = (claims : Array<Claim>) => {
+    let incorrectCnt = countInCorrect(claims);
+    let cannotSayCnt = countNotGiven(claims);
+
     return <>
       {incorrectCnt > 0 && (
         <span style={{ color: 'darkred' }}>{incorrectCnt} errors detected</span>
@@ -111,6 +139,46 @@ const SentencesComponent = ({ display, sentences }) => {
         />
       </div>
     }
+    {display && sentences.length !== 0 &&
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{ marginRight: '0.5rem' }}>
+          <input
+            type="checkbox"
+            value="2"
+            checked={selectedTypes.includes(2)}
+            onChange={() => handleTypeChange(2)}
+          />
+          Failed Checks
+        </label>
+        <label style={{ marginRight: '0.5rem' }}>
+          <input
+            type="checkbox"
+            value="3"
+            checked={selectedTypes.includes(3)}
+            onChange={() => handleTypeChange(3)}
+          />
+          Not Given
+        </label>
+        <label style={{ marginRight: '0.5rem' }}>
+          <input
+            type="checkbox"
+            value="4"
+            checked={selectedTypes.includes(4)}
+            onChange={() => handleTypeChange(4)}
+          />
+          Could Not Access Resources
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value="1"
+            checked={selectedTypes.includes(1)}
+            onChange={() => handleTypeChange(1)}
+          />
+          All Correct
+        </label>
+      </div>
+    }
     <div className="claims-container">
       {filteredSentences.map((sentence, i) => (
         <div className='claim-section' key={`sentence-${i}`}>
@@ -120,7 +188,7 @@ const SentencesComponent = ({ display, sentences }) => {
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
             <p>{sentence.sentence}</p>
-            <div style={{ alignContent: 'right' }}>{getMessage(inCorrectClaimsCnts[i], notGivenClaimsCnts[i])}</div>
+            <div style={{ alignContent: 'right' }}>{getMessage(sentence.claims)}</div>
             <span className={`dropdown-arrow${expandedClaims[i] ? '.open' : ''}`}>
               ▼
             </span>
