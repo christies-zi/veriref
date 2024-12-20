@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
-import SentencesComponent, {Sentence} from "./components/SentencesComponent";
+import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 
 function App() {
 
@@ -21,12 +21,21 @@ function App() {
     setErrorMessage("");
   };
 
-  const handlTextInput = (e) => {
+  const handleTextInput = (e) => {
     setTextInput(e.target.value); // Save the plain text
     setFileInput(null); // Clear file input (only one input type allowed)
     const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
     fileInputElement.value = ""; // Clear the input field
     setErrorMessage("");
+  };
+
+  const handleAdjustHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    textarea.style.height = "auto";
+    const maxRows = 50;
+    const lineHeight = 24;
+    const maxHeight = lineHeight * maxRows;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
   };
 
   const handleSubmit = async () => {
@@ -46,7 +55,7 @@ function App() {
       }
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
-          "Access-Control-Allow-Origin": BACKEND_SERVER,
+          "Access-Control-Allow-Origin": `${BACKEND_SERVER}/process`,
           "Content-Type": "multipart/form-data",
         },
       });
@@ -79,7 +88,8 @@ function App() {
           <textarea
             placeholder="Or enter plain text"
             value={textInput}
-            onChange={handlTextInput}
+            onChange={handleAdjustHeight}
+            onInput={handleTextInput}
             className="input-textarea"
             rows={4}
           />
@@ -96,7 +106,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {<SentencesComponent sentences={sentences}/>}
+      {<SentencesComponent sentences={sentences} />}
 
     </div>
   );
