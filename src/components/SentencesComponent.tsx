@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import "../styles/SentencesComponent.css";
 
 type Claim = {
@@ -15,19 +15,33 @@ export type Sentence = {
   claims: Array<Claim>
 }
 
-const SentencesComponent = ({ sentences }) => {
-
+const SentencesComponent = ({ display, sentences }) => {
+  const [searchTerm, setSearchTerm] = useState('');
   const [expandedClaims, setExpandedClaims] = useState<Array<boolean>>(
     new Array(sentences.length).fill(false)
+  );
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const filteredSentences = sentences.filter((sentence) =>
+    sentence.sentence.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   const inCorrectClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 2).length);
   const notGivenClaimsCnts: Array<number> = sentences.map((sentence) => sentence.claims.filter((c) => c.type === 3 || c.type === 4).length);
 
-  const toggleExpand = (index) => {
-    const newExpandedClaims = [...expandedClaims];
-    newExpandedClaims[index] = !newExpandedClaims[index];
-    setExpandedClaims(newExpandedClaims);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // Delay of 300ms
+
+    return () => {
+      clearTimeout(handler); // Clear timeout if user keeps typing
+    };
+  }, [searchTerm]);
+
+  const toggleExpand = (index: number) => {
+    const updatedExpandedClaims = [...expandedClaims];
+    updatedExpandedClaims[index] = !updatedExpandedClaims[index];
+    setExpandedClaims(updatedExpandedClaims);
   };
 
   const getBackgroundColor = (type) => {
@@ -80,8 +94,25 @@ const SentencesComponent = ({ sentences }) => {
   };
 
   return (<div>
+    {display && sentences.length !== 0 &&
+      <div style={{ marginBottom: '1rem' }}>
+        <input
+          type="text"
+          placeholder="Search sentences..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: '0.5rem',
+            width: '100%',
+            boxSizing: 'border-box',
+            borderRadius: '4px',
+            border: '1px solid #ccc',
+          }}
+        />
+      </div>
+    }
     <div className="claims-container">
-      {sentences.map((sentence, i) => (
+      {filteredSentences.map((sentence, i) => (
         <div className='claim-section' key={`sentence-${i}`}>
           <div
             className="claim-header"

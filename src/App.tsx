@@ -12,6 +12,7 @@ function App() {
   const [textInput, setTextInput] = useState(""); // Stores plain text input
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
 
   const handleFileInput = (e) => {
@@ -43,6 +44,7 @@ function App() {
       setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
       return;
     }
+    setLoaded(false);
     setIsLoading(true);
     setSentences([]);
 
@@ -66,6 +68,7 @@ function App() {
       console.error("Error processing inputs:", error);
     } finally {
       setIsLoading(false);
+      setLoaded(true);
     }
   };
 
@@ -106,7 +109,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {<SentencesComponent sentences={sentences} />}
+      {<SentencesComponent display={loaded} sentences={sentences} />}
 
     </div>
   );
