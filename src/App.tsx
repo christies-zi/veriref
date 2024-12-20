@@ -24,6 +24,8 @@ function App() {
   const handlTextInput = (e) => {
     setTextInput(e.target.value); // Save the plain text
     setFileInput(null); // Clear file input (only one input type allowed)
+    const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
+    fileInputElement.value = ""; // Clear the input field
     setErrorMessage("");
   };
 
