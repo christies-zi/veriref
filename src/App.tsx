@@ -5,14 +5,12 @@ import "./components/SentencesComponent"
 import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 
 function App() {
-
   const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
 
   const handleFileInput = (e) => {
@@ -44,16 +42,15 @@ function App() {
       setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
       return;
     }
-    setLoaded(false);
     setIsLoading(true);
     setSentences([]);
 
     try {
       const formData = new FormData();
       if (fileInput) {
-        formData.append("file", fileInput); // Include the uploaded file
+        formData.append("file", fileInput);
       } else if (textInput) {
-        formData.append("textInput", textInput); // Include the plain text
+        formData.append("textInput", textInput);
       }
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
@@ -61,14 +58,12 @@ function App() {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(response.data.sentences);
       setSentences(response.data.sentences);
 
     } catch (error) {
       console.error("Error processing inputs:", error);
     } finally {
       setIsLoading(false);
-      setLoaded(true);
     }
   };
 
@@ -109,7 +104,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {<SentencesComponent display={loaded} sentences={sentences} />}
+      {<SentencesComponent inputSentences={sentences} />}
 
     </div>
   );
