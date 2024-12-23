@@ -18,10 +18,10 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
     const [userPrompt, setUserPrompt] = useState<string[]>(Array(claims.length).fill(""));
     const [promptOutputText, setPromptOutputText] = useState<string[]>(Array(claims.length).fill(""));
     const [loadingPrompt, setLoadingPrompt] = useState(false);
-    const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
-    const [textInput, setTextInput] = useState(""); // Stores plain text input
-    const [errorMessage, setErrorMessage] = useState("");
+    const [fileInput, setFileInput] = useState(null); 
+    const [textInput, setTextInput] = useState(""); 
     const [loadingSource, setLoadingSource] = useState(false);
+    const [reloading, setReloading] = useState(false);
 
     const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
         setPromptDropdownOpen((prevDropdown) =>
@@ -125,7 +125,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
         const file = e.target.files[0];
         setFileInput(file);
         setTextInput("");
-        setErrorMessage("");
     };
 
     const handleTextInput = (e) => {
@@ -133,7 +132,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
         setFileInput(null);
         const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
         fileInputElement.value = "";
-        setErrorMessage("");
     };
 
     const handleAdjustHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -147,13 +145,11 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
 
     const handleSourceSubmit = async () => {
         if (!fileInput && !textInput) {
-            setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
             return;
         }
         setLoadingSource(true);
         let prevClaims = claims;
         setClaims([]);
-
         try {
             let body = JSON.stringify({
                 claims: prevClaims,
@@ -175,6 +171,33 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
             console.error("Error processing inputs:", error);
         } finally {
             setLoadingSource(false);
+        }
+    };
+
+    const handleReload = async () => {
+        setReloading(true);
+        setClaims([]);
+        try {
+            let body = JSON.stringify({
+                sentence: sentence.sentence,
+                sources: sentence.sources,
+                claims: sentence.claims
+            });
+
+            const response = await fetch(`${BACKEND_SERVER}/analyse_sentence`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            });
+
+            const data = await response.json();
+            setClaims(data.claims);
+            sentence.claims = data.claims;
+            onSentenceChange(sentence, i);
+        } catch (error) {
+            console.error("Error processing inputs:", error);
+        } finally {
+            setReloading(false);
         }
     };
 
@@ -275,6 +298,10 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                             </div>
                         )}
                     </div>
+                    <button onClick={handleReload} className="submit-button">
+                        Reload
+                    </button>
+                    {reloading && <div>Reloading...</div>}
                 </div>
             )}
         </div>
