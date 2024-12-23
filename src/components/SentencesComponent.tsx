@@ -25,21 +25,27 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences 
   const [sentences, setSentences] = useState<Sentence[]>(inputSentences);
   useEffect(() => {
     setSentences(inputSentences);
-  }, [inputSentences]); 
+  }, [inputSentences]);
+
+  const handleSentenceChange = (newSentence: Sentence, index: number) => {
+    setSentences((prevSentences) =>
+      prevSentences.map((sentence, k) => (k === index ? newSentence : sentence))
+    );  
+  };
 
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
-  const filteredSentences = sentences.filter((sentence) => {
+  const sentencePassesFilter = sentences.map((sentence) => {
     const matchesSearch = sentence.sentence.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
     const matchesType = selectedTypes.includes(1)
       ? sentence.claims.every((claim) => claim.type === 1)
       : selectedTypes.length === 0 ||
       sentence.claims.some((claim) => selectedTypes.includes(claim.type));
     return matchesSearch && matchesType;
-  }
-  );
+  });
+
   const handleTypeChange = (type) => {
     setSelectedTypes((prevSelected) => {
       if (type === 1) {
@@ -123,8 +129,10 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences 
       </div>
     }
     <div className="claims-container">
-      {filteredSentences.map((sentence, i) => (
-        <SentenceComponent sentence={sentence} i={i}/>
+      {sentences.map((sentence, i) => (
+        <div>
+          {sentencePassesFilter[i] && <SentenceComponent sentence={sentence} i={i} onSentenceChange={handleSentenceChange}/>}
+        </div>
       ))}
     </div>
   </div>

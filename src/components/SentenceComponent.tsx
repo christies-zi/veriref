@@ -4,10 +4,11 @@ import "../styles/SentencesComponent.css";
 
 interface SentenceComponentProps {
     sentence: Sentence;
-    i: number
+    i: number;
+    onSentenceChange: (newSentence: Sentence, index: number) => void;
 }
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSentenceChange }) => {
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
@@ -168,6 +169,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i }) =>
             });
             const data = await response.json();
             setClaims(data.claims);
+            sentence.claims = data.claims;
+            onSentenceChange(sentence, i);
         } catch (error) {
             console.error("Error processing inputs:", error);
         } finally {
