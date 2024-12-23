@@ -4,21 +4,26 @@ import "../styles/SentencesComponent.css";
 
 interface SentenceComponentProps {
     sentence: Sentence;
-    i: number;
-    sources: Array<string>
+    i: number
 }
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sources}) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i }) => {
+    const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
-    const [isDropdownOpen, setDropdownOpen] = useState<Array<boolean>>(new Array(sentence.claims.length).fill(false));
-    const [userPrompt, setUserPrompt] = useState<string[]>(Array(sentence.claims.length).fill(""));
-    const [outputText, setOutputText] = useState<string[]>(Array(sentence.claims.length).fill(""));
-    const [loading, setLoading] = useState(false);
+    const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
+    const [isSourceDropdownOpen, setSourceDropdownOpen] = useState<boolean>(false);
+    const [userPrompt, setUserPrompt] = useState<string[]>(Array(claims.length).fill(""));
+    const [promptOutputText, setPromptOutputText] = useState<string[]>(Array(claims.length).fill(""));
+    const [loadingPrompt, setLoadingPrompt] = useState(false);
+    const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
+    const [textInput, setTextInput] = useState(""); // Stores plain text input
+    const [errorMessage, setErrorMessage] = useState("");
+    const [loadingSource, setLoadingSource] = useState(false);
 
-    const updateDropdownAtIndex = (index: number, value: boolean) => {
-        setDropdownOpen((prevDropdown) =>
+    const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
+        setPromptDropdownOpen((prevDropdown) =>
             prevDropdown.map((dropdown, k) => (k === index ? value : dropdown))
         );
     };
@@ -29,8 +34,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
         );
     };
 
-    const updateOutputTextAtIndex = (index: number, value: string) => {
-        setOutputText((prevOutput) =>
+    const updatepromptOutputTextAtIndex = (index: number, value: string) => {
+        setPromptOutputText((prevOutput) =>
             prevOutput.map((output, k) => (k === index ? value : output))
         );
     };
@@ -92,12 +97,12 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
 
     const handlePromptSubmit = async (claim, j) => {
         if (!userPrompt[j].trim()) return;
-        setLoading(true);
+        setLoadingPrompt(true);
         try {
             let body = JSON.stringify({
                 prompt: userPrompt[j],
                 claim: claim,
-                sources: sources,
+                sources: sentence.sources,
             });
 
             const response = await fetch(`${BACKEND_SERVER}/prompt`, {
@@ -106,12 +111,67 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
                 body: body
             });
             const data = await response.json();
-            updateOutputTextAtIndex(j, data.output || 'No response received.');
+            updatepromptOutputTextAtIndex(j, data.output || 'No response received.');
         } catch (error) {
             console.error('Error submitting prompt:', error);
-            updateOutputTextAtIndex(j, 'An error occurred while processing your request.');
+            updatepromptOutputTextAtIndex(j, 'An error occurred while processing your request.');
         } finally {
-            setLoading(false);
+            setLoadingPrompt(false);
+        }
+    };
+
+    const handleFileInput = (e) => {
+        const file = e.target.files[0];
+        setFileInput(file);
+        setTextInput("");
+        setErrorMessage("");
+    };
+
+    const handleTextInput = (e) => {
+        setTextInput(e.target.value);
+        setFileInput(null);
+        const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
+        fileInputElement.value = "";
+        setErrorMessage("");
+    };
+
+    const handleAdjustHeight = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const textarea = e.target;
+        textarea.style.height = "auto";
+        const maxRows = 50;
+        const lineHeight = 24;
+        const maxHeight = lineHeight * maxRows;
+        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    };
+
+    const handleSourceSubmit = async () => {
+        if (!fileInput && !textInput) {
+            setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
+            return;
+        }
+        setLoadingSource(true);
+        let prevClaims = claims;
+        setClaims([]);
+
+        try {
+            let body = JSON.stringify({
+                claims: prevClaims,
+                sources: sentence.sources,
+                file: fileInput,
+                textInput: textInput
+            });
+
+            const response = await fetch(`${BACKEND_SERVER}/add_source`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: body
+            });
+            const data = await response.json();
+            setClaims(data.claims);
+        } catch (error) {
+            console.error("Error processing inputs:", error);
+        } finally {
+            setLoadingSource(false);
         }
     };
 
@@ -123,7 +183,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
             >
                 <p>{sentence.sentence}</p>
-                <div style={{ alignContent: 'right' }}>{getMessage(sentence.claims)}</div>
+                <div style={{ alignContent: 'right' }}>{getMessage(claims)}</div>
                 <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
                     ▼
                 </span>
@@ -131,7 +191,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
             {expanded && (
                 <div className="claim-details">
                     <div>The sentence can be split into the following claims:</div>
-                    {sentence.claims.map((claim, j) => (
+                    {claims.map((claim, j) => (
                         <div className="output-section" style={{ backgroundColor: getBackgroundColor(claim.type) }} key={`claim-${i}-${j}`}>
                             <p>{claim.claim}</p>
                             <p>{claim.answer}
@@ -156,23 +216,23 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
                             <div className="dropdown">
                                 <button
                                     className="dropdown-toggle"
-                                    onClick={() => updateDropdownAtIndex(j, !isDropdownOpen[j])}
+                                    onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
                                 >
                                     Try another prompt
                                 </button>
-                                {isDropdownOpen[j] && (
+                                {isPromptDropdownOpen[j] && (
                                     <div className="dropdown-content">
                                         <textarea
                                             placeholder="Enter your prompt here..."
                                             value={userPrompt[j]}
                                             onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
                                         />
-                                        <button onClick={() => handlePromptSubmit(claim, j)} disabled={loading}>
-                                            {loading ? 'Submitting...' : 'Submit'}
+                                        <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt}>
+                                            {loadingPrompt ? 'Submitting...' : 'Submit'}
                                         </button>
-                                        {outputText[j] && (
+                                        {promptOutputText[j] && (
                                             <div className="output-text">
-                                                <strong>Output:</strong> {outputText[j]}
+                                                <strong>Output:</strong> {promptOutputText[j]}
                                             </div>
                                         )}
                                     </div>
@@ -180,6 +240,38 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i , sou
                             </div>
                         </div>
                     ))}
+                    <div className="dropdown">
+                        <button
+                            className="dropdown-toggle"
+                            onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
+                        >
+                            Add another source
+                        </button>
+                        {isSourceDropdownOpen && (
+                            <div className="dropdown-content">
+                                <label htmlFor="fileUpload" className="input-label">
+                                    Add New Source (File or Text):
+                                </label>
+                                <input
+                                    type="file"
+                                    accept=".pdf"
+                                    id={`fileUpload-${i}`}
+                                    onChange={handleFileInput}
+                                />
+                                <textarea
+                                    placeholder="Or enter link or plain text"
+                                    value={textInput}
+                                    onChange={handleAdjustHeight}
+                                    onInput={handleTextInput}
+                                    rows={4}
+                                />
+                                <button onClick={handleSourceSubmit} className="submit-button">
+                                    Submit
+                                </button>
+                                {loadingSource && <div>Loading...</div>}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

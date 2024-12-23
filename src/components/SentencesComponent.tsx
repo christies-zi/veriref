@@ -124,7 +124,7 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences 
     }
     <div className="claims-container">
       {filteredSentences.map((sentence, i) => (
-        <SentenceComponent sentence={sentence} i={i} sources={sentence.sources}/>
+        <SentenceComponent sentence={sentence} i={i}/>
       ))}
     </div>
   </div>
