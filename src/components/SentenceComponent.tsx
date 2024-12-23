@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Sentence, Claim } from './SentencesComponent.tsx';
 import "../styles/SentencesComponent.css";
 
@@ -18,8 +18,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
     const [userPrompt, setUserPrompt] = useState<string[]>(Array(claims.length).fill(""));
     const [promptOutputText, setPromptOutputText] = useState<string[]>(Array(claims.length).fill(""));
     const [loadingPrompt, setLoadingPrompt] = useState(false);
-    const [fileInput, setFileInput] = useState(null); 
-    const [textInput, setTextInput] = useState(""); 
+    const [fileInput, setFileInput] = useState(null);
+    const [textInput, setTextInput] = useState("");
     const [loadingSource, setLoadingSource] = useState(false);
     const [reloading, setReloading] = useState(false);
 
@@ -206,46 +206,58 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
             <div
                 className="claim-header"
                 onClick={() => setExpanded(!expanded)}
-                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
             >
                 <p>{sentence.sentence}</p>
-                <div style={{ alignContent: 'right' }}>{getMessage(claims)}</div>
-                <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                    ▼
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <div>{getMessage(claims)}</div>
+                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                        ▼
+                    </span>
+                </div>
             </div>
             {expanded && (
                 <div className="claim-details">
-                    <div>The sentence can be split into the following claims:</div>
+                    <div className="section-title">The sentence can be split into the following claims:</div>
                     {claims.map((claim, j) => (
-                        <div className="output-section" style={{ backgroundColor: getBackgroundColor(claim.type) }} key={`claim-${i}-${j}`}>
-                            <p>{claim.claim}</p>
-                            <p>{claim.answer}
-                                {claim.type !== 4 &&
-                                    <span className="info-icon">i
+                        <div className="claim" style={{ backgroundColor: getBackgroundColor(claim.type) }} key={`claim-${i}-${j}`}>
+                            <p className="claim-text">{claim.claim}</p>
+                            <p className="claim-answer">
+                                {claim.answer}
+                                {claim.type !== 4 && (
+                                    <span className="info-icon">
+                                        i
                                         <span className="tooltip">
                                             Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
                                         </span>
                                     </span>
-                                }
+                                )}
                             </p>
-                            <p>Explanation:
-                                {claim.type !== 4 &&
-                                    <span className="info-icon">i
+                            <p className="claim-explanation">
+                                Explanation:
+                                {claim.type !== 4 && (
+                                    <span className="info-icon">
+                                        i
                                         <span className="tooltip">
                                             {getExplanationInfo(claim.type)}
                                         </span>
-                                    </span>}{claim.explanation}
+                                    </span>
+                                )}
+                                {claim.explanation}
                             </p>
                             {getReferenceInfo(claim.type, claim.references)}
 
                             <div className="dropdown">
-                                <button
-                                    className="dropdown-toggle"
+                                <div
+                                    className="claim-header"
                                     onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
+                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                 >
-                                    Try another prompt
-                                </button>
+                                    <p>Try another prompt</p>
+                                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                        ▼
+                                    </span>
+                                </div>
                                 {isPromptDropdownOpen[j] && (
                                     <div className="dropdown-content">
                                         <textarea
@@ -253,7 +265,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                                             value={userPrompt[j]}
                                             onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
                                         />
-                                        <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt}>
+                                        <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
                                             {loadingPrompt ? 'Submitting...' : 'Submit'}
                                         </button>
                                         {promptOutputText[j] && (
@@ -266,44 +278,50 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                             </div>
                         </div>
                     ))}
-                    <div className="dropdown">
-                        <button
-                            className="dropdown-toggle"
-                            onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
-                        >
-                            Add another source
-                        </button>
-                        {isSourceDropdownOpen && (
-                            <div className="dropdown-content">
-                                <label htmlFor="fileUpload" className="input-label">
-                                    Add New Source (File or Text):
-                                </label>
-                                <input
-                                    type="file"
-                                    accept=".pdf"
-                                    id={`fileUpload-${i}`}
-                                    onChange={handleFileInput}
-                                />
-                                <textarea
-                                    placeholder="Or enter link or plain text"
-                                    value={textInput}
-                                    onChange={handleAdjustHeight}
-                                    onInput={handleTextInput}
-                                    rows={4}
-                                />
-                                <button onClick={handleSourceSubmit} className="submit-button">
-                                    Submit
-                                </button>
-                                {loadingSource && <div>Loading...</div>}
+                    <div className="claim">
+                        <div className="dropdown">
+                            <div
+                                className="claim-header"
+                                onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
+                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                            >
+                                <p>Add another source</p>
+                                <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                    ▼
+                                </span>
                             </div>
-                        )}
+                            {isSourceDropdownOpen && (
+                                <div className="dropdown-content">
+                                    <label htmlFor="fileUpload" className="input-label" />
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        id={`fileUpload-${i}`}
+                                        onChange={handleFileInput}
+                                        className="file-input"
+                                    />
+                                    <textarea
+                                        placeholder="Or enter link or plain text"
+                                        value={textInput}
+                                        onChange={handleAdjustHeight}
+                                        onInput={handleTextInput}
+                                        rows={4}
+                                        className="text-input"
+                                    />
+                                    <button onClick={handleSourceSubmit} className="button">
+                                        Submit
+                                    </button>
+                                    {loadingSource && <div className="loading-spinner">Loading...</div>}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <button onClick={handleReload} className="submit-button">
+                    <button onClick={handleReload} className="button-big">
                         Reload
                     </button>
-                    {reloading && <div>Reloading...</div>}
-                </div>
-            )}
+                    {reloading && <div className="loading-spinner">Reloading...</div>}
+                </div>)}
+
         </div>
     )
 }

@@ -1,45 +1,201 @@
-.claim-section {
-    margin-bottom: 16px;
-    border: 1px solid #ccc;
-    padding: 8px;
-    border-radius: 4px;
+/* General Styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
 }
 
-.claim-header {
-    font-weight: bold;
-    display: flex;
-    justify-content: space-between;
+.sentences-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
-.dropdown-arrow {
-    margin-left: 8px;
-    transition: transform 0.3s ease;
+h1 {
+    text-align: center;
+    color: #4CAF50;
 }
 
-.dropdown-arrow.open {
-    transform: rotate(180deg);
-    /* Rotate the arrow when expanded */
+/* Search Bar */
+.search-bar {
+    margin-bottom: 20px;
 }
 
-.claim-details {
-    margin-top: 8px;
-    padding-left: 16px;
-}
-
-.output-section {
-    margin: 8px 0;
-    padding: 8px;
+.search-bar input {
+    width: 100%;
+    padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.search-bar input:focus {
+    border-color: #4CAF50;
+}
+
+/* Filter Checkboxes */
+.filter-options {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-options label {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.filter-options input {
+    margin-right: 5px;
+}
+
+/* Claims Container */
+.claims-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.claim-section {
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.claim-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.claim {
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.claim:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.claim h2 {
+    margin: 0;
+    font-size: 16px;
+    color: #4CAF50;
+}
+
+.claim p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    color: #007bff;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+/* Error Message */
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* Tooltip Styles */
+.info-icon {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 18px;
+    height: 18px;
+    border: 2px solid black;
+    color: black;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 8px;
+    background-color: transparent;
+    position: relative;
+}
+
+.info-icon:hover .tooltip {
+    visibility: visible;
+}
+
+.tooltip {
+    visibility: hidden;
+    width: 200px;
     background-color: #f9f9f9;
+    color: #000;
+    text-align: center;
+    border-radius: 5px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.output-section.explanation {
-    background-color: #e8f5e9;
-    /* Light green for explanation */
+.button-big {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
 }
 
-.output-section.answer {
-    background-color: #e3f2fd;
-    /* Light blue for answer */
+.button-big:hover {
+    background-color: #45a049;
+}
+
+.button {
+    display: block;
+    width: 50%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px;
+}
+
+.button:hover {
+    background-color: #45a049;
 }
