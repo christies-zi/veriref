@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sentence, Claim } from './SentencesComponent.tsx';
 import "../styles/SentencesComponent.css";
+import axios from 'axios';
 
 interface SentenceComponentProps {
     sentence: Sentence;
@@ -151,21 +152,20 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
         let prevClaims = claims;
         setClaims([]);
         try {
-            let body = JSON.stringify({
-                claims: prevClaims,
-                sources: sentence.sources,
-                file: fileInput,
-                textInput: textInput
+            const formData = new FormData();
+            if (fileInput) {
+              formData.append("file", fileInput);
+            } else if (textInput) {
+              formData.append("textInput", textInput);
+            }
+            const response = await axios.post(`${BACKEND_SERVER}/add_source`, formData, {
+              headers: {
+                "Access-Control-Allow-Origin": `${BACKEND_SERVER}/add_source`,
+                "Content-Type": "multipart/form-data",
+              },
             });
-
-            const response = await fetch(`${BACKEND_SERVER}/add_source`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            });
-            const data = await response.json();
-            setClaims(data.claims);
-            sentence.claims = data.claims;
+            setClaims(response.data.claims);
+            sentence.claims = response.data.claims;
             onSentenceChange(sentence, i);
         } catch (error) {
             console.error("Error processing inputs:", error);
