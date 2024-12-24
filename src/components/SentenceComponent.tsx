@@ -131,7 +131,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
     const handleTextInput = (e) => {
         setTextInput(e.target.value);
         setFileInput(null);
-        const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
+        const fileInputElement = document.getElementById(`fileUpload-${i}`) as HTMLInputElement;
         fileInputElement.value = "";
     };
 
@@ -158,10 +158,13 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
             } else if (textInput) {
               formData.append("textInput", textInput);
             }
+            formData.append("claims", JSON.stringify(prevClaims));
+            formData.append("sources", JSON.stringify(sentence.sources));
+            formData.append("sentence", JSON.stringify(sentence.sentence));
+
             const response = await axios.post(`${BACKEND_SERVER}/add_source`, formData, {
               headers: {
                 "Access-Control-Allow-Origin": `${BACKEND_SERVER}/add_source`,
-                "Content-Type": "multipart/form-data",
               },
             });
             setClaims(response.data.claims);
@@ -169,6 +172,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
             onSentenceChange(sentence, i);
         } catch (error) {
             console.error("Error processing inputs:", error);
+            setClaims(prevClaims);
         } finally {
             setLoadingSource(false);
         }
