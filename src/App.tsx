@@ -3,15 +3,17 @@ import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
 import SentencesComponent, { Sentence } from "./components/SentencesComponent";
+import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
+  const [jobId, setJobId] = useState(null);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -21,8 +23,8 @@ function App() {
   };
 
   const handleTextInput = (e) => {
-    setTextInput(e.target.value); 
-    setFileInput(null); 
+    setTextInput(e.target.value);
+    setFileInput(null);
     const fileInputElement = document.getElementById("fileUpload") as HTMLInputElement;
     fileInputElement.value = ""; // Clear the input field
     setErrorMessage("");
@@ -52,13 +54,41 @@ function App() {
       } else if (textInput) {
         formData.append("textInput", textInput);
       }
+
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
           "Access-Control-Allow-Origin": `${BACKEND_SERVER}/process`,
           "Content-Type": "multipart/form-data",
         },
       });
-      setSentences(response.data.sentences);
+
+      console.log(response.data.jobId)
+
+      setJobId(response.data.jobId);
+
+      console.log(jobId)
+
+      if (response.data.jobId) {
+        const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
+
+        eventSource.onmessage = (event) => {
+          if (event.data === "end") {
+            return () => {
+              eventSource.close();
+            }; 
+          }
+          console.log(event.data)
+
+          let msg = JSON.parse(event.data);
+          console.log(msg)
+        };
+
+        return () => {
+          eventSource.close();
+        };
+      }
+
+      // setSentences(response.data.sentences);
 
     } catch (error) {
       console.error("Error processing inputs:", error);
@@ -100,7 +130,10 @@ function App() {
         Submit
       </button>
 
-      {isLoading && <div className="loading-spinner">Loading...</div>}
+      {isLoading &&
+        <div style={{ textAlign: "center", marginTop: "50px" }}>
+          <GradientText text="Loading" />
+        </div>}
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
