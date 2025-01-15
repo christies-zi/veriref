@@ -199,3 +199,13 @@ h1 {
 .button:hover {
     background-color: #45a049;
 }
+
+/* @keyframes blink {
+    to {
+        visibility: hidden;
+    }
+}
+
+span {
+    animation: blink 1s steps(2, start) infinite;
+} */

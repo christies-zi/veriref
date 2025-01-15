@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
-import SentencesComponent, { Sentence } from "./components/SentencesComponent";
+import SentencesComponent, { Claim, Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
@@ -13,7 +13,6 @@ function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
-  const [jobId, setJobId] = useState(null);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -61,41 +60,32 @@ function App() {
           "Content-Type": "multipart/form-data",
         },
       });
-
-      console.log(response.data.jobId)
-
-      setJobId(response.data.jobId);
-
-      console.log(jobId)
-
       if (response.data.jobId) {
         const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
 
-        eventSource.onmessage = (event) => {
-          let msg = JSON.parse(event.data);
-          console.log(msg)
-          if (msg.messageType === "end") {
-            setSentences(msg.sentences)
-            eventSource.close();
-          } else if (msg.messageType === "sentences") {
-            console.log("sentences")
-            setSentences(msg.sentences)
-          } else if (msg.messageType === "claims") {
-            console.log("claims")
-            console.log(msg.claims)
-          } else if (msg.messageType === "claim") {
-            console.log("claim")
-            console.log(msg.claim)
-          } else if (msg.messageType === "claimNoResource") {
-            console.log("claimNoResource")
-            console.log(msg.claim)
-          }
-          console.log(msg)
-        };
+          eventSource.onmessage = (event) => {
+            let msg = JSON.parse(event.data);
+            console.log(msg);
+          
+            if (msg.messageType === "end") {
+              eventSource.close();
+            } else if (msg.messageType === "sentences") {
+              setSentences(msg.sentences);
+            } else if (msg.messageType === "claims") {
+              // Use `setSentences` with an updated version of the sentences array
+              setSentences((prevSentences) =>
+                prevSentences.map((sentence, k) =>
+                  k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
+                )
+              );
+            } else if (msg.messageType === "claim") {
+              // Handle other cases
+            } else if (msg.messageType === "claimNoResource") {
+              // Handle other cases
+            }
+          };
+          
       }
-
-      console.log("HELP")
-      // setSentences(response.data.sentences);
 
     } catch (error) {
       console.error("Error processing inputs:", error);
