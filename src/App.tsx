@@ -72,16 +72,30 @@ function App() {
             } else if (msg.messageType === "sentences") {
               setSentences(msg.sentences);
             } else if (msg.messageType === "claims") {
-              // Use `setSentences` with an updated version of the sentences array
               setSentences((prevSentences) =>
                 prevSentences.map((sentence, k) =>
                   k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
                 )
               );
             } else if (msg.messageType === "claim") {
-              // Handle other cases
+              setSentences((prevSentences) =>
+                prevSentences.map((sentence, k) => 
+                  k === msg.sentenceIndex 
+                    ? { 
+                        ...sentence, 
+                        claims: sentence.claims.map((claim, idx) =>
+                          idx === msg.claimIndex ? msg.claim : claim
+                        ) 
+                      } 
+                    : sentence
+                )
+              );
             } else if (msg.messageType === "claimNoResource") {
-              // Handle other cases
+              setSentences((prevSentences) =>
+                prevSentences.map((sentence, k) =>
+                  k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
+                )
+              );
             }
           };
           
