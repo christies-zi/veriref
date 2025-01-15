@@ -72,22 +72,29 @@ function App() {
         const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
 
         eventSource.onmessage = (event) => {
-          if (event.data === "end") {
-            return () => {
-              eventSource.close();
-            }; 
-          }
-          console.log(event.data)
-
           let msg = JSON.parse(event.data);
           console.log(msg)
-        };
-
-        return () => {
-          eventSource.close();
+          if (msg.messageType === "end") {
+            setSentences(msg.sentences)
+            eventSource.close();
+          } else if (msg.messageType === "sentences") {
+            console.log("sentences")
+            setSentences(msg.sentences)
+          } else if (msg.messageType === "claims") {
+            console.log("claims")
+            console.log(msg.claims)
+          } else if (msg.messageType === "claim") {
+            console.log("claim")
+            console.log(msg.claim)
+          } else if (msg.messageType === "claimNoResource") {
+            console.log("claimNoResource")
+            console.log(msg.claim)
+          }
+          console.log(msg)
         };
       }
 
+      console.log("HELP")
       // setSentences(response.data.sentences);
 
     } catch (error) {
