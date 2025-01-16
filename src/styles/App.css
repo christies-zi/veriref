@@ -103,7 +103,7 @@ h1 {
   font-weight: bold; /* Bold "i" */
   text-align: center;
   cursor: pointer;
-  margin-left: 8px;
+  margin-right: 8px;
   position: relative;
   background-color: transparent; /* Transparent background */
 }

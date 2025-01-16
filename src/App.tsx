@@ -77,7 +77,33 @@ function App() {
                   k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
                 )
               );
-            } else if (msg.messageType === "claim") {
+            } else if (msg.messageType === "claimAnswer") {
+              setSentences((prevSentences) =>
+                prevSentences.map((sentence, k) => 
+                  k === msg.sentenceIndex 
+                    ? { 
+                        ...sentence, 
+                        claims: sentence.claims.map((claim, idx) =>
+                          idx === msg.claimIndex ? msg.claim : claim
+                        ) 
+                      } 
+                    : sentence
+                )
+              );
+            } else if (msg.messageType === "claimExplanation") {
+              setSentences((prevSentences) =>
+                prevSentences.map((sentence, k) => 
+                  k === msg.sentenceIndex 
+                    ? { 
+                        ...sentence, 
+                        claims: sentence.claims.map((claim, idx) =>
+                          idx === msg.claimIndex ? msg.claim : claim
+                        ) 
+                      } 
+                    : sentence
+                )
+              );
+            } else if (msg.messageType === "claimReferences") {
               setSentences((prevSentences) =>
                 prevSentences.map((sentence, k) => 
                   k === msg.sentenceIndex 
@@ -107,6 +133,40 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  const handleFileRequest = async () => {
+    const formData = new FormData();
+    if (fileInput) {
+      formData.append("file", fileInput);
+    } else if (textInput) {
+      formData.append("textInput", textInput);
+    }
+
+    try {
+      // Sending POST request to the Flask backend using Axios
+      const response = await axios.post(`${BACKEND_SERVER}/generate_pdf`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        responseType: 'blob', // Expecting a PDF file as the response
+      });
+
+      // Create a temporary URL for the PDF file blob
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      // Trigger the download
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'output.pdf'; // The name of the downloaded file
+      link.click();
+      window.URL.revokeObjectURL(url); // Clean up
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Something went wrong. Please try again.');
+    }
+  };
+
 
   return (
     <div className="app-container">
@@ -143,13 +203,13 @@ function App() {
 
       {isLoading &&
         <div style={{ textAlign: "center", marginTop: "50px" }}>
-          <GradientText text="Loading" />
+          <GradientText text="Loading" state={5} />
         </div>}
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
       {<SentencesComponent inputSentences={sentences} />}
-
+      {<button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );
 }
