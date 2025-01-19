@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Sentence, Claim } from './SentencesComponent.tsx';
 import "../styles/SentencesComponent.css";
 import axios from 'axios';
+import GradientText from './GradientText.tsx';
+import Typewriter from './Typewriter.tsx';
 
 interface SentenceComponentProps {
     sentence: Sentence;
@@ -24,6 +26,10 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
     const [loadingSource, setLoadingSource] = useState(false);
     const [reloading, setReloading] = useState(false);
 
+    useEffect(() => {
+        setClaims(sentence.claims);
+    }, [sentence, i]);
+
     const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
         setPromptDropdownOpen((prevDropdown) =>
             prevDropdown.map((dropdown, k) => (k === index ? value : dropdown))
@@ -42,12 +48,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
         );
     };
 
-    const getBackgroundColor = (type) => {
-        if (type === 1) return 'lightgreen';
-        if (type === 2) return 'lightcoral';
-        return 'lightyellow';
-    };
-
     const getExplanationInfo = (type) => {
         if (type === 1) return "Based only on the input text explain why the following claim is correct.";
         if (type === 2) return "Based only on the input text explain why the following claim is incorrect.";
@@ -58,12 +58,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
     const countNotGiven = (claims: Array<Claim>) => claims.filter((c) => c.type === 3 || c.type === 4).length;
 
     const getMessage = (claims: Array<Claim>) => {
+        if (claims.length === 0 || claims.some((c) => c.type === 5)) {
+            return <><GradientText text={'Processing'} state={5} /></>
+        }
         let incorrectCnt = countInCorrect(claims);
         let cannotSayCnt = countNotGiven(claims);
 
         return <>
             {incorrectCnt > 0 && (
-                <span style={{ color: 'darkred' }}>{incorrectCnt} errors detected</span>
+                <span style={{ color: 'darkred' }}>{incorrectCnt} wrong claim in the input text detected</span>
             )}
             {incorrectCnt > 0 && cannotSayCnt > 0 && ', '}
             {cannotSayCnt > 0 && (
@@ -72,7 +75,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                 </span>
             )}
             {incorrectCnt === 0 && cannotSayCnt === 0 && (
-                <span style={{ color: 'darkgreen' }}>No errors detected</span>
+                <span style={{ color: 'darkgreen' }}>No errors in the input text detected</span>
             )}
         </>
     };
@@ -85,7 +88,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                         Based only on the input text which specific setences from this text support the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-            </p><p>{references.toString()}</p></>
+                {!references && <GradientText text="Processing" state={5}/>}
+                {references && <Typewriter text={references.toString()} />}
+            </p></>
         if (type === 2)
             return <><p>Reference sentences:
                 <span className="info-icon">i
@@ -93,9 +98,18 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
                         Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-            </p><p>{references.toString()}</p></>
+                {!references && <GradientText text="Processing" state={5}/>}
+                {references && <Typewriter text={references.toString()} />}
+            </p></>
         return <></>;
     };
+
+    const getBackgroudColour = (claimType: number | undefined | null) => {
+        if (claimType === 1) return 'darkgreen'
+        if (claimType === 2) return 'darkred'
+        if (claimType === 5) return 'grey'
+        return 'orange'
+    }
 
     const handlePromptSubmit = async (claim, j) => {
         if (!userPrompt[j].trim()) return;
@@ -154,19 +168,20 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
         try {
             const formData = new FormData();
             if (fileInput) {
-              formData.append("file", fileInput);
+                formData.append("file", fileInput);
             } else if (textInput) {
-              formData.append("textInput", textInput);
+                formData.append("textInput", textInput);
             }
             formData.append("claims", JSON.stringify(prevClaims));
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
 
             const response = await axios.post(`${BACKEND_SERVER}/add_source`, formData, {
-              headers: {
-                "Access-Control-Allow-Origin": `${BACKEND_SERVER}/add_source`,
-              },
+                headers: {
+                    "Access-Control-Allow-Origin": `${BACKEND_SERVER}/add_source`,
+                },
             });
+
             setClaims(response.data.claims);
             sentence.claims = response.data.claims;
             onSentenceChange(sentence, i);
@@ -223,106 +238,113 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentence, i, onSe
             {expanded && (
                 <div className="claim-details">
                     <div className="section-title">The sentence can be split into the following claims:</div>
+                    {claims.length === 0 && <div><GradientText text="Processing" state={5} /></div>}
                     {claims.map((claim, j) => (
-                        <div className="claim" style={{ backgroundColor: getBackgroundColor(claim.type) }} key={`claim-${i}-${j}`}>
-                            <p className="claim-text">{claim.claim}</p>
-                            <p className="claim-answer">
-                                {claim.answer}
-                                {claim.type !== 4 && (
-                                    <span className="info-icon">
-                                        i
-                                        <span className="tooltip">
-                                            Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                        <div>
+                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
+                                <p><GradientText text={claim.claim} state={claim.type} /></p>
+                                {claim.answer && <p className="claim-answer">
+                                    {claim.type !== 4 && (
+                                        <span className="info-icon">
+                                            i
+                                            <span className="tooltip">
+                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                            </span>
                                         </span>
-                                    </span>
-                                )}
-                            </p>
-                            <p className="claim-explanation">
-                                Explanation:
-                                {claim.type !== 4 && (
-                                    <span className="info-icon">
-                                        i
-                                        <span className="tooltip">
-                                            {getExplanationInfo(claim.type)}
-                                        </span>
-                                    </span>
-                                )}
-                                {claim.explanation}
-                            </p>
-                            {getReferenceInfo(claim.type, claim.references)}
-
-                            <div className="dropdown">
-                                <div
-                                    className="claim-header"
-                                    onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
-                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                >
-                                    <p>Try another prompt</p>
-                                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                        ▼
-                                    </span>
-                                </div>
-                                {isPromptDropdownOpen[j] && (
-                                    <div className="dropdown-content">
-                                        <textarea
-                                            placeholder="Enter your prompt here..."
-                                            value={userPrompt[j]}
-                                            onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
-                                        />
-                                        <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
-                                            {loadingPrompt ? 'Submitting...' : 'Submit'}
-                                        </button>
-                                        {promptOutputText[j] && (
-                                            <div className="output-text">
-                                                <strong>Output:</strong> {promptOutputText[j]}
+                                    )}
+                                    <Typewriter text={claim.answer} />
+                                </p>}
+                                {claim.answer && <p className="claim-explanation">
+                                    Explanation:
+                                        <>
+                                            <span className="info-icon">
+                                                i
+                                                <span className="tooltip">
+                                                    {getExplanationInfo(claim.type)}
+                                                </span>
+                                            </span>
+                                            {claim.answer && !claim.explanation && <GradientText text="Processing" state={5}/>}
+                                            {claim.explanation && <Typewriter text={claim.explanation} />}
+                                        </>
+                                </p>}
+                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
+                                {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
+                                    <div className="dropdown">
+                                        <div
+                                            className="claim-header"
+                                            onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
+                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                        >
+                                            <p>Try another prompt</p>
+                                            <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                                ▼
+                                            </span>
+                                        </div>
+                                        {isPromptDropdownOpen[j] && (
+                                            <div className="dropdown-content">
+                                                <textarea
+                                                    placeholder="Enter your prompt here..."
+                                                    value={userPrompt[j]}
+                                                    onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
+                                                />
+                                                <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
+                                                    {loadingPrompt ? 'Submitting...' : 'Submit'}
+                                                </button>
+                                                {promptOutputText[j] && (
+                                                    <div className="output-text">
+                                                        <strong>Output:</strong> {promptOutputText[j]}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
-                                    </div>
-                                )}
+                                    </div>}
                             </div>
                         </div>
                     ))}
-                    <div className="claim">
-                        <div className="dropdown">
-                            <div
-                                className="claim-header"
-                                onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
-                                style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                            >
-                                <p>Add another source</p>
-                                <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                    ▼
-                                </span>
+                    {claims.length !== 0  && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) && 
+                        <>
+                            <div className="claim">
+                                {<div className="dropdown">
+                                    <div
+                                        className="claim-header"
+                                        onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
+                                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                    >
+                                        <p>Add another source</p>
+                                        <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                            ▼
+                                        </span>
+                                    </div>
+                                    {isSourceDropdownOpen && (
+                                        <div className="dropdown-content">
+                                            <label htmlFor="fileUpload" className="input-label" />
+                                            <input
+                                                type="file"
+                                                accept=".pdf"
+                                                id={`fileUpload-${i}`}
+                                                onChange={handleFileInput}
+                                                className="file-input"
+                                            />
+                                            <textarea
+                                                placeholder="Or enter link or plain text"
+                                                value={textInput}
+                                                onChange={handleAdjustHeight}
+                                                onInput={handleTextInput}
+                                                rows={4}
+                                                className="text-input"
+                                            />
+                                            <button onClick={handleSourceSubmit} className="button">
+                                                Submit
+                                            </button>
+                                            {loadingSource && <div className="loading-spinner">Loading...</div>}
+                                        </div>
+                                    )}
+                                </div>}
                             </div>
-                            {isSourceDropdownOpen && (
-                                <div className="dropdown-content">
-                                    <label htmlFor="fileUpload" className="input-label" />
-                                    <input
-                                        type="file"
-                                        accept=".pdf"
-                                        id={`fileUpload-${i}`}
-                                        onChange={handleFileInput}
-                                        className="file-input"
-                                    />
-                                    <textarea
-                                        placeholder="Or enter link or plain text"
-                                        value={textInput}
-                                        onChange={handleAdjustHeight}
-                                        onInput={handleTextInput}
-                                        rows={4}
-                                        className="text-input"
-                                    />
-                                    <button onClick={handleSourceSubmit} className="button">
-                                        Submit
-                                    </button>
-                                    {loadingSource && <div className="loading-spinner">Loading...</div>}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <button onClick={handleReload} className="button-big">
-                        Reload
-                    </button>
+                            <button onClick={handleReload} className="button-big">
+                                Reload
+                            </button>
+                        </>}
                     {reloading && <div className="loading-spinner">Reloading...</div>}
                 </div>)}
 

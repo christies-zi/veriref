@@ -1,0 +1,16 @@
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.gradientText {
+  display: inline-block;
+  background-size: 300% 300%;
+  WebkitBackgroundClip: text;
+  WebkitTextFillColor: transparent;
+  transition: background-position 1s ease-in-out, background-image 1s ease-in-out;
+}
