@@ -2,17 +2,18 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
-import SentencesComponent, { Claim, Sentence } from "./components/SentencesComponent";
+import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = true;
+  const isLocal = false;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
+  const [processingInput, setProcessingInput] = useState(true);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -39,6 +40,7 @@ function App() {
   };
 
   const handleSubmit = async () => {
+    setProcessingInput(true);
     if (!fileInput && !textInput) {
       setErrorMessage("Please upload a PDF or provide text for Input 1 and fill Input 2.");
       return;
@@ -65,10 +67,10 @@ function App() {
 
           eventSource.onmessage = (event) => {
             let msg = JSON.parse(event.data);
-            console.log(msg);
           
             if (msg.messageType === "end") {
               eventSource.close();
+              setProcessingInput(false);
             } else if (msg.messageType === "sentences") {
               setSentences(msg.sentences);
             } else if (msg.messageType === "claims") {
@@ -142,6 +144,8 @@ function App() {
       formData.append("textInput", textInput);
     }
 
+    formData.append("sentences", JSON.stringify(sentences));
+
     try {
       // Sending POST request to the Flask backend using Axios
       const response = await axios.post(`${BACKEND_SERVER}/generate_pdf`, formData, {
@@ -208,8 +212,8 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {<SentencesComponent inputSentences={sentences} />}
-      {<button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} />}
+      {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );
 }

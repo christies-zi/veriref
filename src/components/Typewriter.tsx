@@ -42,7 +42,7 @@
 // export default Typewriter;
 import React, {useState, useEffect} from 'react';
 
-const DEFAULT_MS = 30;
+const DEFAULT_MS = 10;
 
 export interface ITypewriterProps {
     text: string | undefined | null | string[];
