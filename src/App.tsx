@@ -6,7 +6,7 @@ import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
@@ -65,68 +65,68 @@ function App() {
       if (response.data.jobId) {
         const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
 
-          eventSource.onmessage = (event) => {
-            let msg = JSON.parse(event.data);
-          
-            if (msg.messageType === "end") {
-              eventSource.close();
-              setProcessingInput(false);
-            } else if (msg.messageType === "sentences") {
-              setSentences(msg.sentences);
-            } else if (msg.messageType === "claims") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) =>
-                  k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
-                )
-              );
-            } else if (msg.messageType === "claimAnswer") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimExplanation") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimReferences") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimNoResource") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) =>
-                  k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
-                )
-              );
-            }
-          };
-          
+        eventSource.onmessage = (event) => {
+          let msg = JSON.parse(event.data);
+
+          if (msg.messageType === "end") {
+            eventSource.close();
+            setProcessingInput(false);
+          } else if (msg.messageType === "sentences") {
+            setSentences(msg.sentences);
+          } else if (msg.messageType === "claims") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
+              )
+            );
+          } else if (msg.messageType === "claimAnswer") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimExplanation") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimReferences") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimNoResource") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
+              )
+            );
+          }
+        };
+
       }
 
     } catch (error) {
@@ -171,6 +171,9 @@ function App() {
     }
   };
 
+  const handleSentencesChange = (newSentences: Sentence[]) => {
+    setSentences(newSentences);
+  };
 
   return (
     <div className="app-container">
@@ -212,7 +215,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} />}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange}/>}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );

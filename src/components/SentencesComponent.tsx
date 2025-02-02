@@ -19,9 +19,10 @@ export type Sentence = {
 
 interface SentencesComponentProps {
   inputSentences: Sentence[];
+  onSentencesChange: (newSentences: Sentence[]) => void;
 }
 
-const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences }) => {
+const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences, onSentencesChange }) => {
   const [sentences, setSentences] = useState<Sentence[]>(inputSentences);
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,8 +43,11 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences 
   }, [searchTerm]);
 
   const handleSentenceChange = (newSentence: Sentence, index: number) => {
-    setSentences((prevSentences) =>
-      prevSentences.map((sentence, i) => (i === index ? newSentence : sentence))
+    setSentences(prevSentences => {
+      const newSentences = prevSentences.map((sentence, i) => (i === index ? newSentence : sentence));
+      onSentencesChange(newSentences);
+      return newSentences
+    }
     );
   };
 
@@ -127,7 +131,7 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences 
           sentencePassesFilter[i] ? (
             <SentenceComponent
               key={i}
-              sentence={sentence}
+              sentenceExt={sentence}
               i={i}
               onSentenceChange={handleSentenceChange}
             />
