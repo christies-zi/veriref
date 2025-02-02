@@ -28,8 +28,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const [reloading, setReloading] = useState(false);
 
     useEffect(() => {
-        setClaims(sentence.claims);
-    }, [sentence, i]);
+        setClaims(sentenceExt.claims);
+    }, [sentence, sentenceExt, i]);
 
     const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
         setPromptDropdownOpen((prevDropdown) =>
@@ -254,30 +254,96 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     };
 
     const handleReload = async () => {
-        setReloading(true);
+        setLoadingSource(true);
+        let prevClaims = claims;
         setClaims([]);
         try {
-            let body = JSON.stringify({
-                sentence: sentence.sentence,
-                sources: sentence.sources,
-                claims: sentence.claims
+            const formData = new FormData();
+            formData.append("sources", JSON.stringify(sentence.sources));
+            formData.append("sentence", JSON.stringify(sentence.sentence));
+            formData.append("sentenceIndex", JSON.stringify(i));
+
+            const response = await axios.post(`${BACKEND_SERVER}/analyse_sentence`, formData, {
+                headers: {
+                    "Access-Control-Allow-Origin": `${BACKEND_SERVER}/analyse_sentence`,
+                    "Content-Type": "multipart/form-data",
+                },
             });
 
-            const response = await fetch(`${BACKEND_SERVER}/analyse_sentence`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            });
+            if (response.data.jobId) {
+                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_sentence_job/${response.data.jobId}`);
 
-            const data = await response.json();
-            setClaims(data.claims);
-            sentence.claims = data.claims;
-            onSentenceChange(sentence, i);
+                eventSource.onmessage = (event) => {
+                    let msg = JSON.parse(event.data);
+
+                    if (msg.messageType === "end") {
+                        eventSource.close();
+                    } else if (msg.messageType === "claims") {
+                        setClaims(msg.claims);
+                        setSentence(prev => {
+                            const newSentence = { ...prev, claims: [...msg.claims] };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                    } else if (msg.messageType === "claimAnswer") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {...prev,
+                            claims: prev.claims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )}; 
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });  
+                    } else if (msg.messageType === "claimExplanation") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {...prev,
+                            claims: prev.claims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )}; 
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });  
+                    } else if (msg.messageType === "claimReferences") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {...prev,
+                            claims: prev.claims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )}; 
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });  
+                    } else if (msg.messageType === "claimNoResource") {
+                        setClaims([msg.claim]);
+                        setSentence(prev => {
+                            const newSentence = { ...prev, claims: [...[msg.claim]] };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });                    
+                    }
+                }
+            }
         } catch (error) {
             console.error("Error processing inputs:", error);
+            setClaims(prevClaims);
         } finally {
-            setReloading(false);
+            setLoadingSource(false);
         }
+
     };
 
     return (
