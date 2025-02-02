@@ -429,7 +429,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                     </>
                                                 </p>}
                                                 {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
-                                                {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
+                                                {/* {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
                                                     <div className="dropdown">
                                                         <div
                                                             className="claim-header"
@@ -458,7 +458,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                 )}
                                                             </div>
                                                         )}
-                                                    </div>}
+                                                    </div>} */}
                                             </div>
                                         </div>
                                     </motion.div>
