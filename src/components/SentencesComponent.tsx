@@ -20,9 +20,10 @@ export type Sentence = {
 interface SentencesComponentProps {
   inputSentences: Sentence[];
   onSentencesChange: (newSentences: Sentence[]) => void;
+  typesToAnalyse: number[];
 }
 
-const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences, onSentencesChange }) => {
+const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences, onSentencesChange, typesToAnalyse }) => {
   const [sentences, setSentences] = useState<Sentence[]>(inputSentences);
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,6 +135,7 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
               sentenceExt={sentence}
               i={i}
               onSentenceChange={handleSentenceChange}
+              typesToAnalyse={typesToAnalyse}
             />
           ) : null
         )}

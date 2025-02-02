@@ -10,9 +10,12 @@ interface SentenceComponentProps {
     sentenceExt: Sentence;
     i: number;
     onSentenceChange: (newSentence: Sentence, index: number) => void;
+    typesToAnalyse: number[];
 }
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange }) => {
+type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
+
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = true;
@@ -27,19 +30,57 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const [textInput, setTextInput] = useState("");
     const [loadingSource, setLoadingSource] = useState(false);
     const [reloading, setReloading] = useState(false);
-    const [sortedClaims, setSortedClaims] = useState<Claim[]>(sentence.claims);
+    const [sortedClaims, setSortedClaims] = useState<ExtendedClaim[]>(sentence.claims.map((c, i) => ({...c, index: i, fadingOut: false})));
+    const [filteredsIndices, setFilteredIndices] = useState<number[]>([])
+    const [receivedAllClaims, setReceivedAllClaims] = useState<boolean>(false);
 
 
     useEffect(() => {
-        const sorted = [...claims].sort((a, b) => {
+        const filtered = [...claims].map((c, i) => ({...c, index: i, fadingOut: false})).filter((c) => filteredsIndices.includes(c.index))
+        const sorted = [...filtered].sort((a, b) => {
             const order = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5};
             return (order[a.type] || 6) - (order[b.type] || 6);
         });
-        setSortedClaims(sorted);
+
+        const filteredClaims : ExtendedClaim[] = [];
+        const disappearingClaims : ExtendedClaim[] =[];
+
+        const newFiltered : number[] = [];
+
+        sorted.forEach((claim) => {
+            if (typesToAnalyse.includes(claim.type)) {
+                filteredClaims.push(claim);
+                newFiltered.push(claim.index);
+            } else {
+                disappearingClaims.push(claim);
+            }
+        });
+
+        setFilteredIndices(newFiltered);
+
+        const res  = filteredClaims.concat(disappearingClaims)
+        setSortedClaims(res)
+
+        // Set a timeout to remove non-analyzed claims after 1.5 second
+        const timeouts = disappearingClaims.map((claim) =>
+            setTimeout(() => {
+                setSortedClaims((prev) => prev.map((c) => c === claim ? {...c, fadingOut: true} : c));
+
+                setTimeout(() => {
+                    setSortedClaims((prev) => prev.filter((c) => c !== claim));
+                }, 200); 
+            }, 1000)
+        );
+
+        return () => timeouts.forEach(clearTimeout);
     }, [claims]);
 
     useEffect(() => {
         setClaims(sentenceExt.claims);
+        if (! receivedAllClaims && sentenceExt.claims.length > 0) {
+            setReceivedAllClaims(true);
+            setFilteredIndices(sentenceExt.claims.map((_, i) => i));
+        }
     }, [sentence, sentenceExt, i]);
 
     const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
@@ -392,15 +433,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         <AnimatePresence>
                             <motion.div layout>
                                 {sortedClaims.map((claim, j) => (
-                                    <motion.div
-                                        key={claim.claim}
-                                        layout // Enables smooth reordering animation
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                                        className="claim-item"
-                                    >
+                            <motion.div
+                            key={claim.claim}
+                            layout
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: claim.fadingOut ? 0 : 1, y: claim.fadingOut ? -10 : 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                            className="claim-item"
+                        >
                                         <div>
                                             <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
                                                 <p><GradientText text={claim.claim} state={claim.type} /></p>

@@ -266,7 +266,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} />}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} />}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );
