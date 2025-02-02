@@ -4,6 +4,7 @@ import "../styles/SentencesComponent.css";
 import axios from 'axios';
 import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SentenceComponentProps {
     sentenceExt: Sentence;
@@ -12,7 +13,7 @@ interface SentenceComponentProps {
 }
 
 const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange }) => {
-    const [sentence, setSentence] = useState<Sentence>(sentenceExt); 
+    const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
@@ -26,6 +27,16 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const [textInput, setTextInput] = useState("");
     const [loadingSource, setLoadingSource] = useState(false);
     const [reloading, setReloading] = useState(false);
+    const [sortedClaims, setSortedClaims] = useState<Claim[]>(sentence.claims);
+
+
+    useEffect(() => {
+        const sorted = [...claims].sort((a, b) => {
+            const order = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5};
+            return (order[a.type] || 6) - (order[b.type] || 6);
+        });
+        setSortedClaims(sorted);
+    }, [claims]);
 
     useEffect(() => {
         setClaims(sentenceExt.claims);
@@ -206,13 +217,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     } else if (msg.messageType === "claimExplanation") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
@@ -220,13 +233,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     } else if (msg.messageType === "claimReferences") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
@@ -234,13 +249,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     }
                 }
             }
@@ -292,13 +309,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     } else if (msg.messageType === "claimExplanation") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
@@ -306,13 +325,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     } else if (msg.messageType === "claimReferences") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
@@ -320,20 +341,22 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             )
                         )
                         setSentence(prev => {
-                            const newSentence = {...prev,
-                            claims: prev.claims.map((claim, idx) =>
-                                idx === msg.claimIndex ? msg.claim : claim
-                            )}; 
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });  
+                        });
                     } else if (msg.messageType === "claimNoResource") {
                         setClaims([msg.claim]);
                         setSentence(prev => {
                             const newSentence = { ...prev, claims: [...[msg.claim]] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
-                        });                    
+                        });
                     }
                 }
             }
@@ -365,68 +388,83 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 <div className="claim-details">
                     <div className="section-title">The sentence can be split into the following claims:</div>
                     {claims.length === 0 && <div><GradientText text="Processing" state={5} /></div>}
-                    {claims.map((claim, j) => (
-                        <div>
-                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
-                                <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                {claim.answer && <p className="claim-answer">
-                                    {claim.type !== 4 && (
-                                        <span className="info-icon">
-                                            i
-                                            <span className="tooltip">
-                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
-                                            </span>
-                                        </span>
-                                    )}
-                                    <Typewriter text={claim.answer} />
-                                </p>}
-                                {claim.answer && <p className="claim-explanation">
-                                    Explanation:
-                                    <>
-                                        <span className="info-icon">
-                                            i
-                                            <span className="tooltip">
-                                                {getExplanationInfo(claim.type)}
-                                            </span>
-                                        </span>
-                                        {claim.answer && !claim.explanation && <GradientText text="Processing" state={5} />}
-                                        {claim.explanation && <Typewriter text={claim.explanation} />}
-                                    </>
-                                </p>}
-                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
-                                {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
-                                    <div className="dropdown">
-                                        <div
-                                            className="claim-header"
-                                            onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
-                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                        >
-                                            <p>Try another prompt</p>
-                                            <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                                ▼
-                                            </span>
-                                        </div>
-                                        {isPromptDropdownOpen[j] && (
-                                            <div className="dropdown-content">
-                                                <textarea
-                                                    placeholder="Enter your prompt here..."
-                                                    value={userPrompt[j]}
-                                                    onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
-                                                />
-                                                <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
-                                                    {loadingPrompt ? 'Submitting...' : 'Submit'}
-                                                </button>
-                                                {promptOutputText[j] && (
-                                                    <div className="output-text">
-                                                        <strong>Output:</strong> {promptOutputText[j]}
-                                                    </div>
-                                                )}
+                    {claims.length !== 0 &&
+                        <AnimatePresence>
+                            <motion.div layout>
+                                {sortedClaims.map((claim, j) => (
+                                    <motion.div
+                                        key={claim.claim}
+                                        layout // Enables smooth reordering animation
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                                        className="claim-item"
+                                    >
+                                        <div>
+                                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
+                                                <p><GradientText text={claim.claim} state={claim.type} /></p>
+                                                {claim.answer && <p className="claim-answer">
+                                                    {claim.type !== 4 && (
+                                                        <span className="info-icon">
+                                                            i
+                                                            <span className="tooltip">
+                                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <Typewriter text={claim.answer} />
+                                                </p>}
+                                                {claim.answer && <p className="claim-explanation">
+                                                    Explanation:
+                                                    <>
+                                                        <span className="info-icon">
+                                                            i
+                                                            <span className="tooltip">
+                                                                {getExplanationInfo(claim.type)}
+                                                            </span>
+                                                        </span>
+                                                        {claim.answer && !claim.explanation && <GradientText text="Processing" state={5} />}
+                                                        {claim.explanation && <Typewriter text={claim.explanation} />}
+                                                    </>
+                                                </p>}
+                                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
+                                                {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
+                                                    <div className="dropdown">
+                                                        <div
+                                                            className="claim-header"
+                                                            onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
+                                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                        >
+                                                            <p>Try another prompt</p>
+                                                            <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                                                ▼
+                                                            </span>
+                                                        </div>
+                                                        {isPromptDropdownOpen[j] && (
+                                                            <div className="dropdown-content">
+                                                                <textarea
+                                                                    placeholder="Enter your prompt here..."
+                                                                    value={userPrompt[j]}
+                                                                    onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
+                                                                />
+                                                                <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
+                                                                    {loadingPrompt ? 'Submitting...' : 'Submit'}
+                                                                </button>
+                                                                {promptOutputText[j] && (
+                                                                    <div className="output-text">
+                                                                        <strong>Output:</strong> {promptOutputText[j]}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>}
                                             </div>
-                                        )}
-                                    </div>}
-                            </div>
-                        </div>
-                    ))}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </AnimatePresence>}
                     {claims.length !== 0 && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) &&
                         <>
                             <div className="claim">
