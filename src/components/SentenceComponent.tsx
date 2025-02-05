@@ -73,9 +73,12 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         );
 
         return () => timeouts.forEach(clearTimeout);
-    }, [claims]);
+    }, [claims, receivedAllClaims]);
 
     useEffect(() => {
+        console.log("AAAAAA")
+        console.log(sentenceExt.claims)
+        console.log(receivedAllClaims)
         setClaims(sentenceExt.claims);
         if (! receivedAllClaims && sentenceExt.claims.length > 0) {
             setReceivedAllClaims(true);
@@ -218,6 +221,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         setLoadingSource(true);
         let prevClaims = claims;
         setClaims([]);
+        setReceivedAllClaims(false);
+
         try {
             const formData = new FormData();
             if (fileInput) {
@@ -245,6 +250,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     if (msg.messageType === "end") {
                         eventSource.close();
                     } else if (msg.messageType === "claims") {
+                        setFilteredIndices(msg.claims.map((_, i) => i));
+                        setReceivedAllClaims(true);
                         setClaims(msg.claims);
                         setSentence(prev => {
                             const newSentence = { ...prev, claims: [...msg.claims] };
@@ -315,6 +322,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         setLoadingSource(true);
         let prevClaims = claims;
         setClaims([]);
+        setReceivedAllClaims(false);
+
         try {
             const formData = new FormData();
             formData.append("sources", JSON.stringify(sentence.sources));
@@ -337,6 +346,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     if (msg.messageType === "end") {
                         eventSource.close();
                     } else if (msg.messageType === "claims") {
+                        setFilteredIndices(msg.claims.map((_, i) => i));
+                        setReceivedAllClaims(true);
                         setClaims(msg.claims);
                         setSentence(prev => {
                             const newSentence = { ...prev, claims: [...msg.claims] };
