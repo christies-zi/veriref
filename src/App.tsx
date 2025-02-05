@@ -6,7 +6,7 @@ import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
@@ -14,6 +14,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [processingInput, setProcessingInput] = useState(true);
+  const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>([1, 2, 3, 4, 5]);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -56,6 +57,7 @@ function App() {
         formData.append("textInput", textInput);
       }
 
+      formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
           "Access-Control-Allow-Origin": `${BACKEND_SERVER}/process`,
@@ -65,68 +67,68 @@ function App() {
       if (response.data.jobId) {
         const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
 
-          eventSource.onmessage = (event) => {
-            let msg = JSON.parse(event.data);
-          
-            if (msg.messageType === "end") {
-              eventSource.close();
-              setProcessingInput(false);
-            } else if (msg.messageType === "sentences") {
-              setSentences(msg.sentences);
-            } else if (msg.messageType === "claims") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) =>
-                  k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
-                )
-              );
-            } else if (msg.messageType === "claimAnswer") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimExplanation") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimReferences") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) => 
-                  k === msg.sentenceIndex 
-                    ? { 
-                        ...sentence, 
-                        claims: sentence.claims.map((claim, idx) =>
-                          idx === msg.claimIndex ? msg.claim : claim
-                        ) 
-                      } 
-                    : sentence
-                )
-              );
-            } else if (msg.messageType === "claimNoResource") {
-              setSentences((prevSentences) =>
-                prevSentences.map((sentence, k) =>
-                  k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
-                )
-              );
-            }
-          };
-          
+        eventSource.onmessage = (event) => {
+          let msg = JSON.parse(event.data);
+
+          if (msg.messageType === "end") {
+            eventSource.close();
+            setProcessingInput(false);
+          } else if (msg.messageType === "sentences") {
+            setSentences(msg.sentences);
+          } else if (msg.messageType === "claims") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
+              )
+            );
+          } else if (msg.messageType === "claimAnswer") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimExplanation") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimReferences") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "claimNoResource") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
+              )
+            );
+          }
+        };
+
       }
 
     } catch (error) {
@@ -145,32 +147,41 @@ function App() {
     }
 
     formData.append("sentences", JSON.stringify(sentences));
+    formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
 
     try {
-      // Sending POST request to the Flask backend using Axios
       const response = await axios.post(`${BACKEND_SERVER}/generate_pdf`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        responseType: 'blob', // Expecting a PDF file as the response
+        responseType: 'blob', 
       });
 
-      // Create a temporary URL for the PDF file blob
+      
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
 
-      // Trigger the download
+      
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'output.pdf'; // The name of the downloaded file
+      link.download = 'output.pdf'; 
       link.click();
-      window.URL.revokeObjectURL(url); // Clean up
+      window.URL.revokeObjectURL(url); 
     } catch (error) {
       console.error('Error:', error);
       alert('Something went wrong. Please try again.');
     }
   };
 
+  const handleSentencesChange = (newSentences: Sentence[]) => {
+    setSentences(newSentences);
+  };
+
+  const handleTypesToAnalyseChange = (type: number) => {
+    setClaimTypesToAnalyse((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
 
   return (
     <div className="app-container">
@@ -201,6 +212,49 @@ function App() {
 
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
+      <label className="input-label">
+        Select claim types to analyse:
+      </label>
+
+      <div className="filter-options">
+        <label>
+          <input
+            type="checkbox"
+            value="2"
+            checked={claimTypesToAnalyse.includes(2)}
+            onChange={() => handleTypesToAnalyseChange(2)}
+          />
+          Wrong Claims
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value="3"
+            checked={claimTypesToAnalyse.includes(3)}
+            onChange={() => handleTypesToAnalyseChange(3)}
+          />
+          Not Given Claims
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value="4"
+            checked={claimTypesToAnalyse.includes(4)}
+            onChange={() => handleTypesToAnalyseChange(4)}
+          />
+          Could Not Access Resources
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value="1"
+            checked={claimTypesToAnalyse.includes(1)}
+            onChange={() => handleTypesToAnalyseChange(1)}
+          />
+          Correct claims
+        </label>
+      </div>
+
       <button onClick={handleSubmit} className="submit-button">
         Submit
       </button>
@@ -212,7 +266,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} />}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} />}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );
