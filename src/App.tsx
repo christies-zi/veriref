@@ -6,7 +6,7 @@ import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = true;
+  const isLocal = false;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
