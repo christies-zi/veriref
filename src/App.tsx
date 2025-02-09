@@ -6,7 +6,7 @@ import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
@@ -126,7 +126,13 @@ function App() {
                 k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
               )
             );
-          }
+          } else if (msg.messageType === "sentenceProcessingText") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, processingText: msg.processingText, processingTextState: msg.processingTextState } : sentence
+              )
+            );
+          } 
         };
 
       }

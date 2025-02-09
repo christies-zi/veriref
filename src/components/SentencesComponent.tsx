@@ -9,12 +9,15 @@ export type Claim = {
   classification: string;
   explanation: string;
   references: string;
+  processingText: string;
 };
 
 export type Sentence = {
   sentence: string;
   claims: Array<Claim>;
   sources: Array<string>;
+  processingText: string;
+  processingTextState: number;
 };
 
 interface SentencesComponentProps {
@@ -136,6 +139,8 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
               i={i}
               onSentenceChange={handleSentenceChange}
               typesToAnalyse={typesToAnalyse}
+              processingText={sentence.processingText}
+              processingTextState={sentence.processingTextState}
             />
           ) : null
         )}

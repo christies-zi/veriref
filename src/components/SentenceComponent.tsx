@@ -11,14 +11,16 @@ interface SentenceComponentProps {
     i: number;
     onSentenceChange: (newSentence: Sentence, index: number) => void;
     typesToAnalyse: number[];
+    processingText: string;
+    processingTextState: number;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = false;
+    const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -76,9 +78,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     }, [claims, receivedAllClaims]);
 
     useEffect(() => {
-        console.log("AAAAAA")
-        console.log(sentenceExt.claims)
-        console.log(receivedAllClaims)
         setClaims(sentenceExt.claims);
         if (! receivedAllClaims && sentenceExt.claims.length > 0) {
             setReceivedAllClaims(true);
@@ -114,6 +113,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const countNotGiven = (claims: Array<Claim>) => claims.filter((c) => c.type === 3 || c.type === 4).length;
 
     const getMessage = (claims: Array<Claim>) => {
+        if (processingTextState === 0) {
+            return <p>{processingText}</p>
+        }
         if (claims.length === 0 || claims.some((c) => c.type === 5)) {
             return <><GradientText text={'Processing'} state={5} /></>
         }
@@ -154,7 +156,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-                {!references && <GradientText text="Processing" state={5} />}
+                {!references && <GradientText text="Processing" state={5} />}=
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         return <></>;
@@ -438,9 +440,10 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             </div>
             {expanded && (
                 <div className="claim-details">
-                    <div className="section-title">The sentence can be split into the following claims:</div>
-                    {claims.length === 0 && <div><GradientText text="Processing" state={5} /></div>}
+                    {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
                     {claims.length !== 0 &&
+                        <>
+                        <div className="section-title">The sentence can be split into the following claims:</div>
                         <AnimatePresence>
                             <motion.div layout>
                                 {sortedClaims.map((claim, j) => (
@@ -456,6 +459,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                         <div>
                                             <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
                                                 <p><GradientText text={claim.claim} state={claim.type} /></p>
+                                                {claim.type ===5 && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
                                                 {claim.answer && <p className="claim-answer">
                                                     {claim.type !== 4 && (
                                                         <span className="info-icon">
@@ -516,7 +520,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                     </motion.div>
                                 ))}
                             </motion.div>
-                        </AnimatePresence>}
+                        </AnimatePresence> </>}
                     {claims.length !== 0 && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) &&
                         <>
                             <div className="claim">
