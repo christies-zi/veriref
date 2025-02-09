@@ -459,7 +459,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                         <div>
                                             <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
                                                 <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                                {claim.type ===5 && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
+                                                {claim.type === 5 && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
                                                 {claim.answer && <p className="claim-answer">
                                                     {claim.type !== 4 && (
                                                         <span className="info-icon">
@@ -480,7 +480,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                 {getExplanationInfo(claim.type)}
                                                             </span>
                                                         </span>
-                                                        {claim.answer && !claim.explanation && <GradientText text="Processing" state={5} />}
+                                                        {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={5} />}
                                                         {claim.explanation && <Typewriter text={claim.explanation} />}
                                                     </>
                                                 </p>}

@@ -132,7 +132,20 @@ function App() {
                 k === msg.sentenceIndex ? { ...sentence, processingText: msg.processingText, processingTextState: msg.processingTextState } : sentence
               )
             );
-          } 
+          } else if (msg.messageType === "claimProcessingText") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          }
         };
 
       }
