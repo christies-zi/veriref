@@ -138,7 +138,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         </>
     };
 
-    const getReferenceInfo = (type, references) => {
+    const getReferenceInfo = (type, references, processingText) => {
         if (type === 1)
             return <><p>Reference sentences:
                 <span className="info-icon">i
@@ -146,7 +146,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         Based only on the input text which specific setences from this text support the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-                {!references && <GradientText text="Processing" state={5} />}
+                {!references && <GradientText text={processingText} state={5} />}
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         if (type === 2)
@@ -156,7 +156,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-                {!references && <GradientText text="Processing" state={5} />}=
+                {!references && <GradientText text={processingText} state={5} />}=
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         return <></>;
@@ -484,7 +484,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                         {claim.explanation && <Typewriter text={claim.explanation} />}
                                                     </>
                                                 </p>}
-                                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
+                                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references, claim.processingText)}
                                                 {/* {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
                                                     <div className="dropdown">
                                                         <div
