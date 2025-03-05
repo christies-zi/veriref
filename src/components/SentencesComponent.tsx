@@ -10,6 +10,7 @@ export type Claim = {
   explanation: string;
   references: string;
   processingText: string;
+  otherSourcesConsidered: string;
 };
 
 export type Sentence = {
