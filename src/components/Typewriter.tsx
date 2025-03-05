@@ -57,30 +57,35 @@ export interface ITypewriterProps {
 
 export default function Typewriter({text, speed = DEFAULT_MS, loop = false, random = DEFAULT_MS, delay = DEFAULT_MS, cursor = true, onFinished = () => {}, onStart = () => {}}: ITypewriterProps) {
     const formatListString = (input: string): (string | JSX.Element)[] => {
-        // Split string at list items and process each part
         return input
           .split(/(?=\d+\.\s+)/) // Lookahead for enumerated list items
           .flatMap((part, index) => {
-            // Format bold text in the current part
-            const formattedPart = part.split(/(\*\*.*?\*\*)/).map((subPart, subIndex) => {
+            const formattedPart = part.split(/(\*\*.*?\*\*|https?:\/\/\S+)/).map((subPart, subIndex) => {
               if (/^\*\*.*\*\*$/.test(subPart)) {
-                // Remove ** and wrap in <strong>
                 return (
                   <strong key={`bold-${index}-${subIndex}`}>
                     {subPart.slice(2, -2)}
                   </strong>
                 );
               }
-              return subPart; // Non-bold text remains as is
+              
+              if (/^https?:\/\/.+/.test(subPart)) {
+                return (
+                  <a key={`link-${index}-${subIndex}`} href={subPart} target="_blank" rel="noopener noreferrer">
+                    {subPart}
+                  </a>
+                );
+              }
+              
+              return subPart; // Non-bold text and non-links remain as is
             });
       
-            // Add a <br /> before list parts (not the first part)
             if (index > 0) {
               return [<br key={`br-${index}`} />, ...formattedPart];
             }
             return formattedPart;
           });
-      };
+    };
 
     const [currentStringIndex, setCurrentStringIndex] = useState(0);
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
