@@ -4,6 +4,8 @@ import "./styles/App.css";
 import "./components/SentencesComponent"
 import SentencesComponent, { Sentence } from "./components/SentencesComponent";
 import GradientText from "./components/GradientText";
+import { None } from "framer-motion";
+import Typewriter from "./components/Typewriter";
 
 function App() {
   const isLocal = false;
@@ -15,6 +17,9 @@ function App() {
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [processingInput, setProcessingInput] = useState(true);
   const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [infoText, setInfoText] = useState<string | null>(null);
+  const [infoTextState, setInfoTextState] = useState<number>(5);
+  const [suggestedSources, setSuggestedSources] = useState<string | null>(null);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -48,6 +53,9 @@ function App() {
     }
     setIsLoading(true);
     setSentences([]);
+    setInfoTextState(5);
+    setInfoText("Loading");
+    setSuggestedSources(null);
 
     try {
       const formData = new FormData();
@@ -126,6 +134,36 @@ function App() {
                 k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
               )
             );
+          } else if (msg.messageType === "sentenceProcessingText") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? { ...sentence, processingText: msg.processingText, processingTextState: msg.processingTextState } : sentence
+              )
+            );
+          } else if (msg.messageType === "claimProcessingText") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex
+                  ? {
+                    ...sentence,
+                    claims: sentence.claims.map((claim, idx) =>
+                      idx === msg.claimIndex ? msg.claim : claim
+                    )
+                  }
+                  : sentence
+              )
+            );
+          } else if (msg.messageType === "generalMessage") {
+            setInfoTextState(msg.messageState);
+            setInfoText(msg.message);
+          } else if (msg.messageType === "suggestedSources") {
+            console.log(msg.suggestedSources);
+            const formattedSources = `Suggested sources based on extracted keywords are:\n` + 
+            msg.suggestedSources
+                  .map((item, index) => `${index + 1}. ${item[0]} - ${item[1]}`)
+                  .join("\n");
+
+            setSuggestedSources(formattedSources)
           }
         };
 
@@ -154,19 +192,19 @@ function App() {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        responseType: 'blob', 
+        responseType: 'blob',
       });
 
-      
+
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
 
-      
+
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'output.pdf'; 
+      link.download = 'output.pdf';
       link.click();
-      window.URL.revokeObjectURL(url); 
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error:', error);
       alert('Something went wrong. Please try again.');
@@ -259,10 +297,33 @@ function App() {
         Submit
       </button>
 
-      {isLoading &&
-        <div style={{ textAlign: "center", marginTop: "50px" }}>
-          <GradientText text="Loading" state={5} />
-        </div>}
+      {infoText && <>
+        {infoTextState === 5 &&
+          <div style={{ textAlign: "center", marginTop: "50px" }}>
+            <GradientText text={infoText} state={infoTextState} />
+          </div>}
+        {infoTextState !== 5 &&
+          <>
+            <div style={{ marginTop: "50px" }}>
+              <Typewriter text={infoText} />
+            </div>
+            {!suggestedSources &&
+              <div style={{ marginTop: "50px" }}>
+                <GradientText text={"Analysing keywords and searching the web for corresponding sources"} state={5} />
+              </div>
+            }
+            {
+              suggestedSources && 
+              <div style={{ marginTop: "50px" }}>
+                <Typewriter text={suggestedSources}/>
+              </div>
+            }
+          </>
+        }
+      </>}
+
+
+
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 

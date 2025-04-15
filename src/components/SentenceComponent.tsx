@@ -11,11 +11,13 @@ interface SentenceComponentProps {
     i: number;
     onSentenceChange: (newSentence: Sentence, index: number) => void;
     typesToAnalyse: number[];
+    processingText: string;
+    processingTextState: number;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = false;
@@ -30,22 +32,22 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const [textInput, setTextInput] = useState("");
     const [loadingSource, setLoadingSource] = useState(false);
     const [reloading, setReloading] = useState(false);
-    const [sortedClaims, setSortedClaims] = useState<ExtendedClaim[]>(sentence.claims.map((c, i) => ({...c, index: i, fadingOut: false})));
+    const [sortedClaims, setSortedClaims] = useState<ExtendedClaim[]>(sentence.claims.map((c, i) => ({ ...c, index: i, fadingOut: false })));
     const [filteredsIndices, setFilteredIndices] = useState<number[]>([])
     const [receivedAllClaims, setReceivedAllClaims] = useState<boolean>(false);
 
 
     useEffect(() => {
-        const filtered = [...claims].map((c, i) => ({...c, index: i, fadingOut: false})).filter((c) => filteredsIndices.includes(c.index))
+        const filtered = [...claims].map((c, i) => ({ ...c, index: i, fadingOut: false })).filter((c) => filteredsIndices.includes(c.index))
         const sorted = [...filtered].sort((a, b) => {
-            const order = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5};
+            const order = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5 };
             return (order[a.type] || 6) - (order[b.type] || 6);
         });
 
-        const filteredClaims : ExtendedClaim[] = [];
-        const disappearingClaims : ExtendedClaim[] =[];
+        const filteredClaims: ExtendedClaim[] = [];
+        const disappearingClaims: ExtendedClaim[] = [];
 
-        const newFiltered : number[] = [];
+        const newFiltered: number[] = [];
 
         sorted.forEach((claim) => {
             if (typesToAnalyse.includes(claim.type)) {
@@ -58,17 +60,17 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
         setFilteredIndices(newFiltered);
 
-        const res  = filteredClaims.concat(disappearingClaims)
+        const res = filteredClaims.concat(disappearingClaims)
         setSortedClaims(res)
 
         // Set a timeout to remove non-analyzed claims after 1.5 second
         const timeouts = disappearingClaims.map((claim) =>
             setTimeout(() => {
-                setSortedClaims((prev) => prev.map((c) => c === claim ? {...c, fadingOut: true} : c));
+                setSortedClaims((prev) => prev.map((c) => c === claim ? { ...c, fadingOut: true } : c));
 
                 setTimeout(() => {
                     setSortedClaims((prev) => prev.filter((c) => c !== claim));
-                }, 200); 
+                }, 200);
             }, 1000)
         );
 
@@ -76,11 +78,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     }, [claims, receivedAllClaims]);
 
     useEffect(() => {
-        console.log("AAAAAA")
-        console.log(sentenceExt.claims)
-        console.log(receivedAllClaims)
         setClaims(sentenceExt.claims);
-        if (! receivedAllClaims && sentenceExt.claims.length > 0) {
+        if (!receivedAllClaims && sentenceExt.claims.length > 0) {
             setReceivedAllClaims(true);
             setFilteredIndices(sentenceExt.claims.map((_, i) => i));
         }
@@ -114,6 +113,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const countNotGiven = (claims: Array<Claim>) => claims.filter((c) => c.type === 3 || c.type === 4).length;
 
     const getMessage = (claims: Array<Claim>) => {
+        if (processingTextState === 0) {
+            return <p>{processingText}</p>
+        }
         if (claims.length === 0 || claims.some((c) => c.type === 5)) {
             return <><GradientText text={'Processing'} state={5} /></>
         }
@@ -136,7 +138,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         </>
     };
 
-    const getReferenceInfo = (type, references) => {
+    const getReferenceInfo = (type, references, processingText) => {
         if (type === 1)
             return <><p>Reference sentences:
                 <span className="info-icon">i
@@ -144,7 +146,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         Based only on the input text which specific setences from this text support the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-                {!references && <GradientText text="Processing" state={5} />}
+                {!references && <GradientText text={processingText} state={5} />}
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         if (type === 2)
@@ -154,7 +156,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                         Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
                     </span>
                 </span>
-                {!references && <GradientText text="Processing" state={5} />}
+                {!references && <GradientText text={processingText} state={5} />}=
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         return <></>;
@@ -438,50 +440,68 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             </div>
             {expanded && (
                 <div className="claim-details">
-                    <div className="section-title">The sentence can be split into the following claims:</div>
-                    {claims.length === 0 && <div><GradientText text="Processing" state={5} /></div>}
+                    {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
                     {claims.length !== 0 &&
-                        <AnimatePresence>
-                            <motion.div layout>
-                                {sortedClaims.map((claim, j) => (
-                            <motion.div
-                            key={claim.claim}
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: claim.fadingOut ? 0 : 1, y: claim.fadingOut ? -10 : 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                            className="claim-item"
-                        >
-                                        <div>
-                                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
-                                                <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                                {claim.answer && <p className="claim-answer">
-                                                    {claim.type !== 4 && (
-                                                        <span className="info-icon">
-                                                            i
-                                                            <span className="tooltip">
-                                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                        <>
+                            <div className="section-title">The sentence can be split into the following claims:</div>
+                            <AnimatePresence>
+                                <motion.div layout>
+                                    {sortedClaims.map((claim, j) => (
+                                        <motion.div
+                                            key={claim.claim}
+                                            layout
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: claim.fadingOut ? 0 : 1, y: claim.fadingOut ? -10 : 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                                            className="claim-item"
+                                        >
+                                            <div>
+                                                <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
+                                                    <p><GradientText text={claim.claim} state={claim.type} /></p>
+                                                    {claim.type === 5 && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
+                                                    {claim.answer && <p className="claim-answer">
+                                                        {claim.type !== 4 && (
+                                                            <span className="info-icon">
+                                                                i
+                                                                <span className="tooltip">
+                                                                    Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                                                </span>
                                                             </span>
-                                                        </span>
-                                                    )}
-                                                    <Typewriter text={claim.answer} />
-                                                </p>}
-                                                {claim.answer && <p className="claim-explanation">
-                                                    Explanation:
-                                                    <>
-                                                        <span className="info-icon">
-                                                            i
-                                                            <span className="tooltip">
-                                                                {getExplanationInfo(claim.type)}
+                                                        )}
+                                                        <Typewriter text={claim.answer} />
+                                                    </p>}
+                                                    {claim.answer &&
+                                                        <p className="claim-explanation">
+                                                        Explanation:
+                                                        <>
+                                                            <span className="info-icon">
+                                                                i
+                                                                <span className="tooltip">
+                                                                    {getExplanationInfo(claim.type)}
+                                                                </span>
                                                             </span>
-                                                        </span>
-                                                        {claim.answer && !claim.explanation && <GradientText text="Processing" state={5} />}
-                                                        {claim.explanation && <Typewriter text={claim.explanation} />}
-                                                    </>
-                                                </p>}
-                                                {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references)}
-                                                {/* {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
+                                                            {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={5} />}
+                                                            {claim.explanation && <Typewriter text={claim.explanation} />}
+                                                        </>
+                                                    </p>}
+                                                    {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references, claim.processingText)}
+                                                    {claim.otherSourcesConsidered &&
+                                                        <p className="claim-explanation">
+                                                            Other sources found and considered during the online search:
+                                                            <>
+                                                                <span className="info-icon">
+                                                                    i
+                                                                    <span className="tooltip">
+                                                                        The claim was analysed based on the top-5 search results. These are all the sources analysed, and the results of their analysis. 
+                                                                    </span>
+                                                                </span>
+                                                                <div>
+                                                                <Typewriter text={claim.otherSourcesConsidered} />
+                                                                </div>
+                                                            </>
+                                                        </p>}
+                                                    {/* {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
                                                     <div className="dropdown">
                                                         <div
                                                             className="claim-header"
@@ -511,12 +531,12 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                             </div>
                                                         )}
                                                     </div>} */}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </AnimatePresence>}
+                                        </motion.div>
+                                    ))}
+                                </motion.div>
+                            </AnimatePresence> </>}
                     {claims.length !== 0 && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) &&
                         <>
                             <div className="claim">
