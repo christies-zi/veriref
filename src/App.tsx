@@ -9,7 +9,7 @@ import Typewriter from "./components/Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const clientId = useRef<string>(uuidv4())
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
@@ -21,7 +21,6 @@ function App() {
   const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>([1, 2, 3, 4, 5]);
   const [infoText, setInfoText] = useState<string | null>(null);
   const [infoTextState, setInfoTextState] = useState<number>(5);
-  const [suggestedSources, setSuggestedSources] = useState<string | null>(null);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -57,7 +56,6 @@ function App() {
     setSentences([]);
     setInfoTextState(5);
     setInfoText("Loading");
-    setSuggestedSources(null);
 
     try {
       const formData = new FormData();
@@ -68,7 +66,7 @@ function App() {
       }
 
       formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
-      formData.append("clientId", JSON.stringify(clientId));
+      formData.append("clientId", JSON.stringify(clientId.current));
 
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
@@ -76,8 +74,9 @@ function App() {
           "Content-Type": "multipart/form-data",
         },
       });
+
       if (response.data.jobId) {
-        const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}/${clientId}`);
+        const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}/${clientId.current}`);
 
         eventSource.onmessage = (event) => {
           let msg = JSON.parse(event.data);
@@ -160,14 +159,6 @@ function App() {
           } else if (msg.messageType === "generalMessage") {
             setInfoTextState(msg.messageState);
             setInfoText(msg.message);
-          } else if (msg.messageType === "suggestedSources") {
-            console.log(msg.suggestedSources);
-            const formattedSources = `Suggested sources based on extracted keywords are:\n` + 
-            msg.suggestedSources
-                  .map((item, index) => `${index + 1}. ${item[0]} - ${item[1]}`)
-                  .join("\n");
-
-            setSuggestedSources(formattedSources)
           }
         };
 
@@ -312,17 +303,6 @@ function App() {
             <div style={{ marginTop: "50px" }}>
               <Typewriter text={infoText} />
             </div>
-            {!suggestedSources &&
-              <div style={{ marginTop: "50px" }}>
-                <GradientText text={"Analysing keywords and searching the web for corresponding sources"} state={5} />
-              </div>
-            }
-            {
-              suggestedSources && 
-              <div style={{ marginTop: "50px" }}>
-                <Typewriter text={suggestedSources}/>
-              </div>
-            }
           </>
         }
       </>}
@@ -332,7 +312,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} />}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} clientId={clientId}/>}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );

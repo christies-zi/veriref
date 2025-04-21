@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Sentence, Claim } from './SentencesComponent.tsx';
 import "../styles/SentencesComponent.css";
 import axios from 'axios';
@@ -13,14 +13,15 @@ interface SentenceComponentProps {
     typesToAnalyse: number[];
     processingText: string;
     processingTextState: number;
+    clientId: MutableRefObject<string>;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = false;
+    const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -169,31 +170,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         return 'orange'
     }
 
-    const handlePromptSubmit = async (claim, j) => {
-        if (!userPrompt[j].trim()) return;
-        setLoadingPrompt(true);
-        try {
-            let body = JSON.stringify({
-                prompt: userPrompt[j],
-                claim: claim,
-                sources: sentence.sources,
-            });
-
-            const response = await fetch(`${BACKEND_SERVER}/prompt`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            });
-            const data = await response.json();
-            updatepromptOutputTextAtIndex(j, data.output || 'No response received.');
-        } catch (error) {
-            console.error('Error submitting prompt:', error);
-            updatepromptOutputTextAtIndex(j, 'An error occurred while processing your request.');
-        } finally {
-            setLoadingPrompt(false);
-        }
-    };
-
     const handleFileInput = (e) => {
         const file = e.target.files[0];
         setFileInput(file);
@@ -236,6 +212,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
             formData.append("sentenceIndex", JSON.stringify(i));
+            formData.append("clientId", JSON.stringify(clientId.current))
 
             const response = await axios.post(`${BACKEND_SERVER}/add_source`, formData, {
                 headers: {
@@ -331,6 +308,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
             formData.append("sentenceIndex", JSON.stringify(i));
+            formData.append("clientId", JSON.stringify(clientId.current));
 
             const response = await axios.post(`${BACKEND_SERVER}/analyse_sentence`, formData, {
                 headers: {
