@@ -140,7 +140,14 @@ function App() {
           } else if (msg.messageType === "sentenceProcessingText") {
             setSentences((prevSentences) =>
               prevSentences.map((sentence, k) =>
-                k === msg.sentenceIndex ? { ...sentence, processingText: msg.processingText, processingTextState: msg.processingTextState } : sentence
+                k === msg.sentenceIndex ? { ...sentence, 
+                  processingText: msg.processingText, 
+                  processingTextState: msg.processingTextState, 
+                  prevSentenceWithContext: msg.prevSentenceWithContext,
+                  keywords: msg.keywords, 
+                  summary: msg.summary, 
+                  paragraphSummary: msg.paragraphSummary, 
+                 } : sentence
               )
             );
           } else if (msg.messageType === "claimProcessingText") {
