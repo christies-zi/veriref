@@ -19,6 +19,10 @@ export type Sentence = {
   sources: Array<string>;
   processingText: string;
   processingTextState: number;
+  prevSentenceWithContext: string; 
+  keywords: Array<string>;
+  summary: string; 
+  paragraphSummary: string;
 };
 
 interface SentencesComponentProps {
