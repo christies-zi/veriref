@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
@@ -137,17 +137,33 @@ function App() {
                 k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
               )
             );
+          } else if (msg.messageType === "sentenceProcessingTextSources") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? {
+                  ...sentence,
+                  processingText: msg.processingText,
+                  processingTextState: msg.processingTextState,
+                  prevSentenceWithContext: msg.prevSentenceWithContext,
+                  keywords: msg.keywords,
+                  summary: msg.summary,
+                  paragraphSummary: msg.paragraphSummary,
+                  sources: msg.sources
+                } : sentence
+              )
+            );
           } else if (msg.messageType === "sentenceProcessingText") {
             setSentences((prevSentences) =>
               prevSentences.map((sentence, k) =>
-                k === msg.sentenceIndex ? { ...sentence, 
-                  processingText: msg.processingText, 
-                  processingTextState: msg.processingTextState, 
+                k === msg.sentenceIndex ? {
+                  ...sentence,
+                  processingText: msg.processingText,
+                  processingTextState: msg.processingTextState,
                   prevSentenceWithContext: msg.prevSentenceWithContext,
-                  keywords: msg.keywords, 
-                  summary: msg.summary, 
-                  paragraphSummary: msg.paragraphSummary, 
-                 } : sentence
+                  keywords: msg.keywords,
+                  summary: msg.summary,
+                  paragraphSummary: msg.paragraphSummary,
+                } : sentence
               )
             );
           } else if (msg.messageType === "claimProcessingText") {
@@ -319,7 +335,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} clientId={clientId}/>}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} clientId={clientId} />}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );

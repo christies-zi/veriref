@@ -5,6 +5,7 @@ import axios from 'axios';
 import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
 import { motion, AnimatePresence } from "framer-motion";
+import { use } from 'framer-motion/m';
 
 interface SentenceComponentProps {
     sentenceExt: Sentence;
@@ -79,6 +80,18 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
       
         return () => timers.forEach(clearTimeout);
       }, [claims, typesToAnalyse, receivedAllClaims, removedClaimIndices]);
+
+    useEffect(() => {
+        setSentence((prevSentence) => ({ ...prevSentence, 
+            sources: sentenceExt.sources,
+            processingText: sentenceExt.processingText,
+            processingTextState: sentenceExt.processingTextState,
+            prevSentenceWithContext: sentenceExt.prevSentenceWithContext,
+            keywords: sentenceExt.keywords,
+            summary: sentenceExt.summary,
+            paragraphSummary: sentenceExt.paragraphSummary,
+         }));    
+    }, [sentenceExt]);
 
     useEffect(() => {
         setClaims(sentenceExt.claims);
@@ -215,6 +228,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             } else if (textInput) {
                 formData.append("textInput", textInput);
             }
+
             formData.append("claims", JSON.stringify(prevClaims));
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
@@ -361,10 +375,16 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
         try {
             const formData = new FormData();
+
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
             formData.append("sentenceIndex", JSON.stringify(i));
             formData.append("clientId", JSON.stringify(clientId.current));
+            formData.append("keywords", JSON.stringify(sentence.keywords));
+            formData.append("summary", JSON.stringify(sentence.summary));
+            formData.append("prevSentenceWithContext", JSON.stringify(sentence.prevSentenceWithContext));
+            formData.append("paragraphSummary", JSON.stringify(sentence.paragraphSummary));
+            formData.append("typesToAnalyse", JSON.stringify(typesToAnalyse)); 
 
             const response = await axios.post(`${BACKEND_SERVER}/analyse_sentence`, formData, {
                 headers: {
@@ -374,7 +394,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             });
 
             if (response.data.jobId) {
-                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_sentence_job/${response.data.jobId}`);
+                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_sentence_job/${response.data.jobId}/${clientId.current}`);
 
                 eventSource.onmessage = (event) => {
                     let msg = JSON.parse(event.data);
@@ -382,15 +402,59 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     if (msg.messageType === "end") {
                         eventSource.close();
                     } else if (msg.messageType === "claims") {
-                        setFilteredIndices(msg.claims.map((_, i) => i));
-                        setReceivedAllClaims(true);
-                        setClaims(msg.claims);
+
                         setSentence(prev => {
-                            const newSentence = { ...prev, claims: msg.claims };
+                            const newSentence : Sentence = { ...prev, claims: msg.claims as Claim[] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
                         });
-                    } else if (msg.messageType === "claimAnswer") {
+
+                        setFilteredIndices(msg.claims.map((_, i) => i));
+                        setReceivedAllClaims(true);
+                        setClaims(msg.claims);
+                        
+                    } else if (msg.messageType === "claimNoResource") {
+                        setClaims([msg.claim])
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: [msg.claim]
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "sentenceProcessingText") {
+                        setSentence(prev => {
+                              const newSentence = { ...prev, 
+                              processingText: msg.processingText, 
+                              processingTextState: msg.processingTextState, 
+                              prevSentenceWithContext: msg.prevSentenceWithContext,
+                              keywords: msg.keywords, 
+                              summary: msg.summary, 
+                              paragraphSummary: msg.paragraphSummary, 
+                             }; 
+                                onSentenceChange(newSentence, i);
+                                return newSentence;
+                            }
+                        
+                        );
+                      } else if (msg.messageType === "claimProcessingText") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "claimAnswer") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
                                 idx === msg.claimIndex ? msg.claim : claim
@@ -435,13 +499,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                     idx === msg.claimIndex ? msg.claim : claim
                                 )
                             };
-                            onSentenceChange(newSentence, i);
-                            return newSentence;
-                        });
-                    } else if (msg.messageType === "claimNoResource") {
-                        setClaims([msg.claim]);
-                        setSentence(prev => {
-                            const newSentence = { ...prev, claims: [msg.claim] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
                         });
