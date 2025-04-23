@@ -204,10 +204,35 @@ function App() {
 
     formData.append("sentences", JSON.stringify(sentences));
     formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
-    formData.append("clientId", JSON.stringify(clientId));
+    formData.append("clientId", JSON.stringify(clientId.current));
+
+    const response = await axios.post(`${BACKEND_SERVER}/request_pdf`, formData, {
+      headers: {
+        "Access-Control-Allow-Origin": `${BACKEND_SERVER}/request_pdf`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const jobId = response.data.jobId;
+
+    if (response.data.jobId) {
+      const eventSource = new EventSource(`${BACKEND_SERVER}/generate_pdf/${response.data.jobId}/${clientId.current}`);
+
+      eventSource.onmessage = (event) => {
+        let msg = JSON.parse(event.data);
+
+        if (msg.messageType === "end") {
+          eventSource.close();
+        }
+      }
+    }
+
+    const formDataNew = new FormData();
+    formDataNew.append("jobId", jobId);
+    formDataNew.append("clientId", JSON.stringify(clientId.current));
 
     try {
-      const response = await axios.post(`${BACKEND_SERVER}/generate_pdf`, formData, {
+      const response = await axios.post(`${BACKEND_SERVER}/get_pdf`, formDataNew, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
