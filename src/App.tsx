@@ -209,7 +209,6 @@ function App() {
     const response = await axios.post(`${BACKEND_SERVER}/request_pdf`, formData, {
       headers: {
         "Access-Control-Allow-Origin": `${BACKEND_SERVER}/request_pdf`,
-        "Content-Type": "multipart/form-data",
       },
     });
 
