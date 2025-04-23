@@ -194,6 +194,31 @@ function App() {
     }
   };
 
+  function waitForStreamCompletion(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const eventSource = new EventSource(url);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.messageType === "ending") {
+            eventSource.close();
+            resolve();
+          }
+        } catch (err) {
+          console.error("Error parsing message", err, event.data);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error("EventSource failed", err);
+        eventSource.close();
+        reject(err);
+      };
+    });
+  }
+
+
   const handleFileRequest = async () => {
     const formData = new FormData();
     if (fileInput) {
@@ -215,15 +240,8 @@ function App() {
     const jobId = response.data.jobId;
 
     if (response.data.jobId) {
-      const eventSource = new EventSource(`${BACKEND_SERVER}/generate_pdf/${response.data.jobId}/${clientId.current}`);
-
-      eventSource.onmessage = (event) => {
-        let msg = JSON.parse(event.data);
-
-        if (msg.messageType === "end") {
-          eventSource.close();
-        }
-      }
+      const streamUrl = `${BACKEND_SERVER}/generate_pdf/${response.data.jobId}/${clientId.current}`;
+      await waitForStreamCompletion(streamUrl);
     }
 
     const formDataNew = new FormData();
