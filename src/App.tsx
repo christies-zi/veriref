@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import "./styles/App.css";
 import "./components/SentencesComponent"
@@ -9,8 +9,8 @@ import Typewriter from "./components/Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 
 function App() {
-  const isLocal = false;
-  const clientId = uuidv4(); 
+  const isLocal = true;
+  const clientId = useRef<string>(uuidv4())
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
   const [textInput, setTextInput] = useState(""); // Stores plain text input
@@ -21,7 +21,6 @@ function App() {
   const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>([1, 2, 3, 4, 5]);
   const [infoText, setInfoText] = useState<string | null>(null);
   const [infoTextState, setInfoTextState] = useState<number>(5);
-  const [suggestedSources, setSuggestedSources] = useState<string | null>(null);
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -57,7 +56,6 @@ function App() {
     setSentences([]);
     setInfoTextState(5);
     setInfoText("Loading");
-    setSuggestedSources(null);
 
     try {
       const formData = new FormData();
@@ -68,14 +66,17 @@ function App() {
       }
 
       formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
+      formData.append("clientId", JSON.stringify(clientId.current));
+
       const response = await axios.post(`${BACKEND_SERVER}/process`, formData, {
         headers: {
           "Access-Control-Allow-Origin": `${BACKEND_SERVER}/process`,
           "Content-Type": "multipart/form-data",
         },
       });
+
       if (response.data.jobId) {
-        const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}`);
+        const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}/${clientId.current}`);
 
         eventSource.onmessage = (event) => {
           let msg = JSON.parse(event.data);
@@ -136,10 +137,33 @@ function App() {
                 k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
               )
             );
+          } else if (msg.messageType === "sentenceProcessingTextSources") {
+            setSentences((prevSentences) =>
+              prevSentences.map((sentence, k) =>
+                k === msg.sentenceIndex ? {
+                  ...sentence,
+                  processingText: msg.processingText,
+                  processingTextState: msg.processingTextState,
+                  prevSentenceWithContext: msg.prevSentenceWithContext,
+                  keywords: msg.keywords,
+                  summary: msg.summary,
+                  paragraphSummary: msg.paragraphSummary,
+                  sources: msg.sources
+                } : sentence
+              )
+            );
           } else if (msg.messageType === "sentenceProcessingText") {
             setSentences((prevSentences) =>
               prevSentences.map((sentence, k) =>
-                k === msg.sentenceIndex ? { ...sentence, processingText: msg.processingText, processingTextState: msg.processingTextState } : sentence
+                k === msg.sentenceIndex ? {
+                  ...sentence,
+                  processingText: msg.processingText,
+                  processingTextState: msg.processingTextState,
+                  prevSentenceWithContext: msg.prevSentenceWithContext,
+                  keywords: msg.keywords,
+                  summary: msg.summary,
+                  paragraphSummary: msg.paragraphSummary,
+                } : sentence
               )
             );
           } else if (msg.messageType === "claimProcessingText") {
@@ -158,14 +182,6 @@ function App() {
           } else if (msg.messageType === "generalMessage") {
             setInfoTextState(msg.messageState);
             setInfoText(msg.message);
-          } else if (msg.messageType === "suggestedSources") {
-            console.log(msg.suggestedSources);
-            const formattedSources = `Suggested sources based on extracted keywords are:\n` + 
-            msg.suggestedSources
-                  .map((item, index) => `${index + 1}. ${item[0]} - ${item[1]}`)
-                  .join("\n");
-
-            setSuggestedSources(formattedSources)
           }
         };
 
@@ -178,6 +194,31 @@ function App() {
     }
   };
 
+  function waitForStreamCompletion(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const eventSource = new EventSource(url);
+
+      eventSource.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.messageType === "ending") {
+            eventSource.close();
+            resolve();
+          }
+        } catch (err) {
+          console.error("Error parsing message", err, event.data);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error("EventSource failed", err);
+        eventSource.close();
+        reject(err);
+      };
+    });
+  }
+
+
   const handleFileRequest = async () => {
     const formData = new FormData();
     if (fileInput) {
@@ -188,10 +229,27 @@ function App() {
 
     formData.append("sentences", JSON.stringify(sentences));
     formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
-    formData.append("client_id", JSON.stringify(clientId));
+    formData.append("clientId", JSON.stringify(clientId.current));
+
+    const response = await axios.post(`${BACKEND_SERVER}/request_pdf`, formData, {
+      headers: {
+        "Access-Control-Allow-Origin": `${BACKEND_SERVER}/request_pdf`,
+      },
+    });
+
+    const jobId = response.data.jobId;
+
+    if (response.data.jobId) {
+      const streamUrl = `${BACKEND_SERVER}/generate_pdf/${response.data.jobId}/${clientId.current}`;
+      await waitForStreamCompletion(streamUrl);
+    }
+
+    const formDataNew = new FormData();
+    formDataNew.append("jobId", jobId);
+    formDataNew.append("clientId", JSON.stringify(clientId.current));
 
     try {
-      const response = await axios.post(`${BACKEND_SERVER}/generate_pdf`, formData, {
+      const response = await axios.post(`${BACKEND_SERVER}/get_pdf`, formDataNew, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -310,17 +368,6 @@ function App() {
             <div style={{ marginTop: "50px" }}>
               <Typewriter text={infoText} />
             </div>
-            {!suggestedSources &&
-              <div style={{ marginTop: "50px" }}>
-                <GradientText text={"Analysing keywords and searching the web for corresponding sources"} state={5} />
-              </div>
-            }
-            {
-              suggestedSources && 
-              <div style={{ marginTop: "50px" }}>
-                <Typewriter text={suggestedSources}/>
-              </div>
-            }
           </>
         }
       </>}
@@ -330,7 +377,7 @@ function App() {
 
       {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
 
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} />}
+      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} clientId={clientId} />}
       {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
     </div>
   );

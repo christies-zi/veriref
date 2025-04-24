@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, MutableRefObject } from 'react';
 import "../styles/SentencesComponent.css";
 import SentenceComponent from './SentenceComponent';
 
@@ -19,15 +19,20 @@ export type Sentence = {
   sources: Array<string>;
   processingText: string;
   processingTextState: number;
+  prevSentenceWithContext: string; 
+  keywords: Array<string>;
+  summary: string; 
+  paragraphSummary: string;
 };
 
 interface SentencesComponentProps {
   inputSentences: Sentence[];
   onSentencesChange: (newSentences: Sentence[]) => void;
   typesToAnalyse: number[];
+  clientId: MutableRefObject<string>;
 }
 
-const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences, onSentencesChange, typesToAnalyse }) => {
+const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences, onSentencesChange, typesToAnalyse, clientId }) => {
   const [sentences, setSentences] = useState<Sentence[]>(inputSentences);
   const [selectedTypes, setSelectedTypes] = useState<number[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,6 +147,7 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
               typesToAnalyse={typesToAnalyse}
               processingText={sentence.processingText}
               processingTextState={sentence.processingTextState}
+              clientId={clientId}
             />
           ) : null
         )}

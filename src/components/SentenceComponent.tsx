@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Sentence, Claim } from './SentencesComponent.tsx';
 import "../styles/SentencesComponent.css";
 import axios from 'axios';
 import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
 import { motion, AnimatePresence } from "framer-motion";
+import { use } from 'framer-motion/m';
 
 interface SentenceComponentProps {
     sentenceExt: Sentence;
@@ -13,14 +14,15 @@ interface SentenceComponentProps {
     typesToAnalyse: number[];
     processingText: string;
     processingTextState: number;
+    clientId: MutableRefObject<string>;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = false;
+    const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -35,47 +37,61 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     const [sortedClaims, setSortedClaims] = useState<ExtendedClaim[]>(sentence.claims.map((c, i) => ({ ...c, index: i, fadingOut: false })));
     const [filteredsIndices, setFilteredIndices] = useState<number[]>([])
     const [receivedAllClaims, setReceivedAllClaims] = useState<boolean>(false);
+    const [removedClaimIndices, setRemovedClaimIndices] = useState<number[]>([]);
 
 
     useEffect(() => {
-        const filtered = [...claims].map((c, i) => ({ ...c, index: i, fadingOut: false })).filter((c) => filteredsIndices.includes(c.index))
-        const sorted = [...filtered].sort((a, b) => {
-            const order = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5 };
-            return (order[a.type] || 6) - (order[b.type] || 6);
-        });
-
-        const filteredClaims: ExtendedClaim[] = [];
-        const disappearingClaims: ExtendedClaim[] = [];
-
-        const newFiltered: number[] = [];
-
-        sorted.forEach((claim) => {
-            if (typesToAnalyse.includes(claim.type)) {
-                filteredClaims.push(claim);
-                newFiltered.push(claim.index);
-            } else {
-                disappearingClaims.push(claim);
-            }
-        });
-
-        setFilteredIndices(newFiltered);
-
-        const res = filteredClaims.concat(disappearingClaims)
-        setSortedClaims(res)
-
-        // Set a timeout to remove non-analyzed claims after 1.5 second
-        const timeouts = disappearingClaims.map((claim) =>
-            setTimeout(() => {
-                setSortedClaims((prev) => prev.map((c) => c === claim ? { ...c, fadingOut: true } : c));
-
-                setTimeout(() => {
-                    setSortedClaims((prev) => prev.filter((c) => c !== claim));
-                }, 200);
-            }, 1000)
+        if (!receivedAllClaims) return;
+      
+        // wrap and tag
+        const extended = claims.map((c, i) => ({ ...c, index: i, fadingOut: false }));
+      
+        // split into keep vs. fade—but only fade those not already removed
+        const keep = extended.filter(c => typesToAnalyse.includes(c.type));
+        const fade = extended.filter(
+          c => !typesToAnalyse.includes(c.type)
+            && !removedClaimIndices.includes(c.index)
         );
+      
+        // sort keeps
+        const orderMap = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5 };
+        keep.sort((a, b) => (orderMap[a.type] || 6) - (orderMap[b.type] || 6));
+      
+        // merge and render
+        const merged = [...keep, ...fade];
+        setSortedClaims(merged);
+      
+        // schedule fade‑out *once*
+        const timers = fade.map(claim =>
+          setTimeout(() => {
+            // first animate out
+            setSortedClaims(prev =>
+              prev.map(c =>
+                c.index === claim.index ? { ...c, fadingOut: true } : c
+              )
+            );
+            // then remove from UI and mark “gone for good”
+            setTimeout(() => {
+              setSortedClaims(prev => prev.filter(c => c.index !== claim.index));
+              setRemovedClaimIndices(prev => [...prev, claim.index]);
+            }, 200);
+          }, 1000)
+        );
+      
+        return () => timers.forEach(clearTimeout);
+      }, [claims, typesToAnalyse, receivedAllClaims, removedClaimIndices]);
 
-        return () => timeouts.forEach(clearTimeout);
-    }, [claims, receivedAllClaims]);
+    useEffect(() => {
+        setSentence((prevSentence) => ({ ...prevSentence, 
+            sources: sentenceExt.sources,
+            processingText: sentenceExt.processingText,
+            processingTextState: sentenceExt.processingTextState,
+            prevSentenceWithContext: sentenceExt.prevSentenceWithContext,
+            keywords: sentenceExt.keywords,
+            summary: sentenceExt.summary,
+            paragraphSummary: sentenceExt.paragraphSummary,
+         }));    
+    }, [sentenceExt]);
 
     useEffect(() => {
         setClaims(sentenceExt.claims);
@@ -169,31 +185,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         return 'orange'
     }
 
-    const handlePromptSubmit = async (claim, j) => {
-        if (!userPrompt[j].trim()) return;
-        setLoadingPrompt(true);
-        try {
-            let body = JSON.stringify({
-                prompt: userPrompt[j],
-                claim: claim,
-                sources: sentence.sources,
-            });
-
-            const response = await fetch(`${BACKEND_SERVER}/prompt`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: body
-            });
-            const data = await response.json();
-            updatepromptOutputTextAtIndex(j, data.output || 'No response received.');
-        } catch (error) {
-            console.error('Error submitting prompt:', error);
-            updatepromptOutputTextAtIndex(j, 'An error occurred while processing your request.');
-        } finally {
-            setLoadingPrompt(false);
-        }
-    };
-
     const handleFileInput = (e) => {
         const file = e.target.files[0];
         setFileInput(file);
@@ -224,6 +215,11 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         let prevClaims = claims;
         setClaims([]);
         setReceivedAllClaims(false);
+        setSentence(prev => {
+            const newSentence = { ...prev, claims: [] };
+            onSentenceChange(newSentence, i);
+            return newSentence;
+        });
 
         try {
             const formData = new FormData();
@@ -232,10 +228,17 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             } else if (textInput) {
                 formData.append("textInput", textInput);
             }
+
             formData.append("claims", JSON.stringify(prevClaims));
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
             formData.append("sentenceIndex", JSON.stringify(i));
+            formData.append("clientId", JSON.stringify(clientId.current));
+            formData.append("keywords", JSON.stringify(sentence.keywords));
+            formData.append("summary", JSON.stringify(sentence.summary));
+            formData.append("prevSentenceWithContext", JSON.stringify(sentence.prevSentenceWithContext));
+            formData.append("paragraphSummary", JSON.stringify(sentence.paragraphSummary));
+            formData.append("typesToAnalyse", JSON.stringify(typesToAnalyse)); 
 
             const response = await axios.post(`${BACKEND_SERVER}/add_source`, formData, {
                 headers: {
@@ -244,7 +247,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 },
             });
             if (response.data.jobId) {
-                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_source_job/${response.data.jobId}`);
+                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_source_job/${response.data.jobId}/${clientId.current}`);
 
                 eventSource.onmessage = (event) => {
                     let msg = JSON.parse(event.data);
@@ -252,15 +255,59 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     if (msg.messageType === "end") {
                         eventSource.close();
                     } else if (msg.messageType === "claims") {
-                        setFilteredIndices(msg.claims.map((_, i) => i));
-                        setReceivedAllClaims(true);
-                        setClaims(msg.claims);
+
                         setSentence(prev => {
-                            const newSentence = { ...prev, claims: [...msg.claims] };
+                            const newSentence : Sentence = { ...prev, claims: msg.claims as Claim[] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
                         });
-                    } else if (msg.messageType === "claimAnswer") {
+
+                        setFilteredIndices(msg.claims.map((_, i) => i));
+                        setReceivedAllClaims(true);
+                        setClaims(msg.claims);
+                        
+                    } else if (msg.messageType === "claimNoResource") {
+                        setClaims([msg.claim])
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: [msg.claim]
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "sentenceProcessingText") {
+                        setSentence(prev => {
+                              const newSentence = { ...prev, 
+                              processingText: msg.processingText, 
+                              processingTextState: msg.processingTextState, 
+                              prevSentenceWithContext: msg.prevSentenceWithContext,
+                              keywords: msg.keywords, 
+                              summary: msg.summary, 
+                              paragraphSummary: msg.paragraphSummary, 
+                             }; 
+                                onSentenceChange(newSentence, i);
+                                return newSentence;
+                            }
+                        
+                        );
+                      } else if (msg.messageType === "claimProcessingText") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "claimAnswer") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
                                 idx === msg.claimIndex ? msg.claim : claim
@@ -328,9 +375,16 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
         try {
             const formData = new FormData();
+
             formData.append("sources", JSON.stringify(sentence.sources));
             formData.append("sentence", JSON.stringify(sentence.sentence));
             formData.append("sentenceIndex", JSON.stringify(i));
+            formData.append("clientId", JSON.stringify(clientId.current));
+            formData.append("keywords", JSON.stringify(sentence.keywords));
+            formData.append("summary", JSON.stringify(sentence.summary));
+            formData.append("prevSentenceWithContext", JSON.stringify(sentence.prevSentenceWithContext));
+            formData.append("paragraphSummary", JSON.stringify(sentence.paragraphSummary));
+            formData.append("typesToAnalyse", JSON.stringify(typesToAnalyse)); 
 
             const response = await axios.post(`${BACKEND_SERVER}/analyse_sentence`, formData, {
                 headers: {
@@ -340,7 +394,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
             });
 
             if (response.data.jobId) {
-                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_sentence_job/${response.data.jobId}`);
+                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_sentence_job/${response.data.jobId}/${clientId.current}`);
 
                 eventSource.onmessage = (event) => {
                     let msg = JSON.parse(event.data);
@@ -348,15 +402,59 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     if (msg.messageType === "end") {
                         eventSource.close();
                     } else if (msg.messageType === "claims") {
-                        setFilteredIndices(msg.claims.map((_, i) => i));
-                        setReceivedAllClaims(true);
-                        setClaims(msg.claims);
+
                         setSentence(prev => {
-                            const newSentence = { ...prev, claims: [...msg.claims] };
+                            const newSentence : Sentence = { ...prev, claims: msg.claims as Claim[] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
                         });
-                    } else if (msg.messageType === "claimAnswer") {
+
+                        setFilteredIndices(msg.claims.map((_, i) => i));
+                        setReceivedAllClaims(true);
+                        setClaims(msg.claims);
+                        
+                    } else if (msg.messageType === "claimNoResource") {
+                        setClaims([msg.claim])
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: [msg.claim]
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "sentenceProcessingText") {
+                        setSentence(prev => {
+                              const newSentence = { ...prev, 
+                              processingText: msg.processingText, 
+                              processingTextState: msg.processingTextState, 
+                              prevSentenceWithContext: msg.prevSentenceWithContext,
+                              keywords: msg.keywords, 
+                              summary: msg.summary, 
+                              paragraphSummary: msg.paragraphSummary, 
+                             }; 
+                                onSentenceChange(newSentence, i);
+                                return newSentence;
+                            }
+                        
+                        );
+                      } else if (msg.messageType === "claimProcessingText") {
+                        setClaims((prevClaims) =>
+                            prevClaims.map((claim, idx) =>
+                                idx === msg.claimIndex ? msg.claim : claim
+                            )
+                        )
+                        setSentence(prev => {
+                            const newSentence = {
+                                ...prev,
+                                claims: prev.claims.map((claim, idx) =>
+                                    idx === msg.claimIndex ? msg.claim : claim
+                                )
+                            };
+                            onSentenceChange(newSentence, i);
+                            return newSentence;
+                        });
+                      } else if (msg.messageType === "claimAnswer") {
                         setClaims((prevClaims) =>
                             prevClaims.map((claim, idx) =>
                                 idx === msg.claimIndex ? msg.claim : claim
@@ -401,13 +499,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                     idx === msg.claimIndex ? msg.claim : claim
                                 )
                             };
-                            onSentenceChange(newSentence, i);
-                            return newSentence;
-                        });
-                    } else if (msg.messageType === "claimNoResource") {
-                        setClaims([msg.claim]);
-                        setSentence(prev => {
-                            const newSentence = { ...prev, claims: [...[msg.claim]] };
                             onSentenceChange(newSentence, i);
                             return newSentence;
                         });
@@ -501,40 +592,11 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                 </div>
                                                             </>
                                                         </p>}
-                                                    {/* {(claim.type !== 5 && (claim.references || claim.type === 4 || (claim.type === 5 && claim.explanation))) &&
-                                                    <div className="dropdown">
-                                                        <div
-                                                            className="claim-header"
-                                                            onClick={() => updatePromptDropdownAtIndex(j, !isPromptDropdownOpen[j])}
-                                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                                        >
-                                                            <p>Try another prompt</p>
-                                                            <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                                                ▼
-                                                            </span>
-                                                        </div>
-                                                        {isPromptDropdownOpen[j] && (
-                                                            <div className="dropdown-content">
-                                                                <textarea
-                                                                    placeholder="Enter your prompt here..."
-                                                                    value={userPrompt[j]}
-                                                                    onChange={(e) => updateUserPromptAtIndex(j, e.target.value)}
-                                                                />
-                                                                <button onClick={() => handlePromptSubmit(claim, j)} disabled={loadingPrompt} className="button">
-                                                                    {loadingPrompt ? 'Submitting...' : 'Submit'}
-                                                                </button>
-                                                                {promptOutputText[j] && (
-                                                                    <div className="output-text">
-                                                                        <strong>Output:</strong> {promptOutputText[j]}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>} */}
                                                 </div>
                                             </div>
                                         </motion.div>
-                                    ))}
+                                    )
+                                    )}
                                 </motion.div>
                             </AnimatePresence> </>}
                     {claims.length !== 0 && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) &&
