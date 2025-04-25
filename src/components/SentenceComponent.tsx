@@ -6,6 +6,7 @@ import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
 import { motion, AnimatePresence } from "framer-motion";
 import { use } from 'framer-motion/m';
+import { ClaimTypes } from '../App.tsx';
 
 interface SentenceComponentProps {
     sentenceExt: Sentence;
@@ -22,7 +23,7 @@ type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = false;
+    const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -54,8 +55,15 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         );
       
         // sort keeps
-        const orderMap = { 2: 1, 3: 2, 4: 3, 1: 4, 5: 5 };
-        keep.sort((a, b) => (orderMap[a.type] || 6) - (orderMap[b.type] || 6));
+        const orderMap = { [ClaimTypes.incorrect] : 1, 
+                            [ClaimTypes.cannotSay] : 2, 
+                            [ClaimTypes.mightBeCorrect] : 3,
+                            [ClaimTypes.noSource] : 4,
+                            [ClaimTypes.textNotRelated] : 5,
+                            [ClaimTypes.correct] : 6,
+                            [ClaimTypes.almostCorrect] : 7,
+                            [ClaimTypes.processing] : 8};
+        keep.sort((a, b) => (orderMap[a.type] || 9) - (orderMap[b.type] || 9));
       
         // merge and render
         const merged = [...keep, ...fade];
@@ -101,32 +109,19 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         }
     }, [sentence, sentenceExt, i]);
 
-    const updatePromptDropdownAtIndex = (index: number, value: boolean) => {
-        setPromptDropdownOpen((prevDropdown) =>
-            prevDropdown.map((dropdown, k) => (k === index ? value : dropdown))
-        );
-    };
-
-    const updateUserPromptAtIndex = (index: number, value: string) => {
-        setUserPrompt((prevPrompt) =>
-            prevPrompt.map((prompt, k) => (k === index ? value : prompt))
-        );
-    };
-
-    const updatepromptOutputTextAtIndex = (index: number, value: string) => {
-        setPromptOutputText((prevOutput) =>
-            prevOutput.map((output, k) => (k === index ? value : output))
-        );
-    };
-
     const getExplanationInfo = (type) => {
-        if (type === 1) return "Based only on the input text explain why the following claim is correct.";
-        if (type === 2) return "Based only on the input text explain why the following claim is incorrect.";
-        return "Based only on the input text explain why it is impossible to say whether following claim is correct or incorrect.";
+        if (type === ClaimTypes.correct) return "Based only on the input text explain why the following claim is correct.";
+        if (type === ClaimTypes.incorrect) return "Based only on the input text explain why the following claim is incorrect.";
+        if (type === ClaimTypes.cannotSay) return "Based only on the input text explain why it is impossible to say whether following claim is correct or incorrect.";
+        if (type === ClaimTypes.almostCorrect) return "Based only on the input text explain why the following claim is almost correct, but some small details might be wrong.";
+        if (type === ClaimTypes.mightBeCorrect) return "Based only on the input text explain why the following claim might be correct, but the evidence in thetext might be indirect or uncertain."
+        if (type === ClaimTypes.noSource) return "No source text was provided or could be fetched to analyse the claim";
+        if (type === ClaimTypes.textNotRelated) return "The source text provided or fetched was not related to the claim. The issue could be in the web-scraping."
     };
 
-    const countInCorrect = (claims: Array<Claim>) => claims.filter((c) => c.type === 2).length;
-    const countNotGiven = (claims: Array<Claim>) => claims.filter((c) => c.type === 3 || c.type === 4).length;
+    const countInCorrect = (claims: Array<Claim>) => claims.filter((c) => c.type === ClaimTypes.incorrect).length;
+    const countNotGiven = (claims: Array<Claim>) => claims.filter((c) => c.type === ClaimTypes.cannotSay || c.type === ClaimTypes.noSource || c.type === ClaimTypes.textNotRelated).length;
+    const countMightBeCorrect = (claims: Array<Claim>) => claims.filter((c) => c.type === ClaimTypes.mightBeCorrect).length;
 
     const getMessage = (claims: Array<Claim>) => {
         if (processingTextState === 0) {
@@ -137,10 +132,11 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         }
         let incorrectCnt = countInCorrect(claims);
         let cannotSayCnt = countNotGiven(claims);
+        let mightBeCorrectCnt = countMightBeCorrect(claims);
 
         return <>
             {incorrectCnt > 0 && (
-                <span style={{ color: 'darkred' }}>{incorrectCnt} wrong claim in the input text detected</span>
+                <span style={{ color: 'darkred' }}>{incorrectCnt} wrong claims in the input text detected</span>
             )}
             {incorrectCnt > 0 && cannotSayCnt > 0 && ', '}
             {cannotSayCnt > 0 && (
@@ -148,40 +144,68 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     Could not check {cannotSayCnt} claims
                 </span>
             )}
-            {incorrectCnt === 0 && cannotSayCnt === 0 && (
+            {(incorrectCnt > 0 || cannotSayCnt > 0) && mightBeCorrectCnt > 0 && ', '}
+            {mightBeCorrectCnt > 0 && (
+                <span style={{ color: 'darkorange' }}>
+                    {mightBeCorrectCnt} claims are controversial 
+                </span>
+            )}         
+            {incorrectCnt === 0 && cannotSayCnt === 0 && mightBeCorrectCnt === 0 && (
                 <span style={{ color: 'darkgreen' }}>No errors in the input text detected</span>
             )}
         </>
     };
 
     const getReferenceInfo = (type, references, processingText) => {
-        if (type === 1)
+        if (type === ClaimTypes.correct)
             return <><p>Reference sentences:
                 <span className="info-icon">i
                     <span className="tooltip">
-                        Based only on the input text which specific setences from this text support the following claim? Output only enumerated sentences without any extra information.
+                        Based only on the input text which specific setences from this text support the following claim?
                     </span>
                 </span>
-                {!references && <GradientText text={processingText} state={5} />}
+                {!references && <GradientText text={processingText} state={ClaimTypes.processing} />}
                 {references && <Typewriter text={references.toString()} />}
             </p></>
-        if (type === 2)
+        if (type === ClaimTypes.incorrect)
             return <><p>Reference sentences:
                 <span className="info-icon">i
                     <span className="tooltip">
-                        Based only on the input text which specific setences from this text contradict the following claim? Output only enumerated sentences without any extra information.
+                        Based only on the input text which specific setences from this text contradict the following claim? 
                     </span>
                 </span>
-                {!references && <GradientText text={processingText} state={5} />}=
+                {!references && <GradientText text={processingText} state={ClaimTypes.processing} />}=
+                {references && <Typewriter text={references.toString()} />}
+            </p></>
+        if (type === ClaimTypes.almostCorrect)
+            return <><p>Reference sentences:
+                <span className="info-icon">i
+                    <span className="tooltip">
+                        Based only on the input text which specific setences from this text prove that the following claim is almost correct?
+                    </span>
+                </span>
+                {!references && <GradientText text={processingText} state={ClaimTypes.processing} />}
+                {references && <Typewriter text={references.toString()} />}
+            </p></>
+        if (type === ClaimTypes.mightBeCorrect)
+            return <><p>Reference sentences:
+                <span className="info-icon">i
+                    <span className="tooltip">
+                        Based only on the input text which specific setences from this text prove that the following claim might be correct, but the evidence is controversial?
+                    </span>
+                </span>
+                {!references && <GradientText text={processingText} state={ClaimTypes.processing} />}
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         return <></>;
     };
 
     const getBackgroudColour = (claimType: number | undefined | null) => {
-        if (claimType === 1) return 'darkgreen'
-        if (claimType === 2) return 'darkred'
-        if (claimType === 5) return 'grey'
+        if (claimType === ClaimTypes.correct) return 'darkgreen'
+        if (claimType === ClaimTypes.incorrect) return 'darkred'
+        if (claimType === ClaimTypes.processing) return 'grey'
+        if (claimType === ClaimTypes.almostCorrect) return 'green'
+        if (claimType === ClaimTypes.mightBeCorrect) return 'darkorange'
         return 'orange'
     }
 
@@ -550,9 +574,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                             <div>
                                                 <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
                                                     <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                                    {claim.type === 5 && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
+                                                    {claim.type === ClaimTypes.processing && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
                                                     {claim.answer && <p className="claim-answer">
-                                                        {claim.type !== 4 && (
+                                                        {claim.type !== ClaimTypes.noSource && claim.type !== ClaimTypes.textNotRelated && (
                                                             <span className="info-icon">
                                                                 i
                                                                 <span className="tooltip">
@@ -572,11 +596,11 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                     {getExplanationInfo(claim.type)}
                                                                 </span>
                                                             </span>
-                                                            {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={5} />}
+                                                            {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={ClaimTypes.processing} />}
                                                             {claim.explanation && <Typewriter text={claim.explanation} />}
                                                         </>
                                                     </p>}
-                                                    {claim.explanation && claim.type !== 3 && claim.type !== 4 && getReferenceInfo(claim.type, claim.references, claim.processingText)}
+                                                    {claim.explanation && claim.references && claim.type !== ClaimTypes.textNotRelated && claim.type !== ClaimTypes.noSource && getReferenceInfo(claim.type, claim.references, claim.processingText)}
                                                     {claim.otherSourcesConsidered &&
                                                         <p className="claim-explanation">
                                                             Other sources found and considered during the online search:
@@ -599,7 +623,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                     )}
                                 </motion.div>
                             </AnimatePresence> </>}
-                    {claims.length !== 0 && claims.every((c) => c.type === 4 || c.references || (c.type === 3 && c.explanation)) &&
+                    {claims.length !== 0 && claims.every((c) => c.type === ClaimTypes.noSource || c.references || (c.type === ClaimTypes.cannotSay && c.explanation) || c.type === ClaimTypes.textNotRelated) &&
                         <>
                             <div className="claim">
                                 {<div className="dropdown">

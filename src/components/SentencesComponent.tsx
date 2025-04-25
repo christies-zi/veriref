@@ -1,6 +1,7 @@
 import React, { useState, useEffect, MutableRefObject } from 'react';
 import "../styles/SentencesComponent.css";
 import SentenceComponent from './SentenceComponent';
+import { ClaimTypes } from '../App';
 
 export type Claim = {
   claim: string;
@@ -63,13 +64,13 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
 
   const handleTypeChange = (type: number) => {
     setSelectedTypes((prevSelected) => {
-      if (type === 1) {
-        return prevSelected.includes(1) ? [] : [1];
+      if (type === ClaimTypes.correct) {
+        return prevSelected.includes(ClaimTypes.correct) ? [] : [ClaimTypes.correct];
       } else {
         if (prevSelected.includes(type)) {
           return prevSelected.filter((t) => t !== type);
         } else {
-          return [...prevSelected.filter((t) => t !== 1), type];
+          return [...prevSelected.filter((t) => t !== ClaimTypes.correct), type];
         }
       }
     });
@@ -77,8 +78,8 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
 
   const sentencePassesFilter = sentences.map((sentence) => {
     const matchesSearch = sentence.sentence.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-    const matchesType = selectedTypes.includes(1)
-      ? sentence.claims.every((claim) => claim.type === 1)
+    const matchesType = selectedTypes.includes(ClaimTypes.correct)
+      ? sentence.claims.every((claim) => claim.type === ClaimTypes.correct)
       : selectedTypes.length === 0 ||
         sentence.claims.some((claim) => selectedTypes.includes(claim.type));
     return matchesSearch && matchesType;
@@ -100,38 +101,65 @@ const SentencesComponent: React.FC<SentencesComponentProps> = ({ inputSentences,
             <label>
               <input
                 type="checkbox"
-                value="2"
-                checked={selectedTypes.includes(2)}
-                onChange={() => handleTypeChange(2)}
+                value={ClaimTypes.incorrect.toString()}
+                checked={selectedTypes.includes(ClaimTypes.incorrect)}
+                onChange={() => handleTypeChange(ClaimTypes.incorrect)}
               />
               Failed Checks
             </label>
             <label>
               <input
                 type="checkbox"
-                value="3"
-                checked={selectedTypes.includes(3)}
-                onChange={() => handleTypeChange(3)}
+                value={ClaimTypes.cannotSay.toString()}
+                checked={selectedTypes.includes(ClaimTypes.cannotSay)}
+                onChange={() => handleTypeChange(ClaimTypes.cannotSay)}
               />
               Not Given
             </label>
             <label>
               <input
                 type="checkbox"
-                value="4"
-                checked={selectedTypes.includes(4)}
-                onChange={() => handleTypeChange(4)}
+                value={ClaimTypes.noSource.toString()}
+                checked={selectedTypes.includes(ClaimTypes.noSource)}
+                onChange={() => handleTypeChange(ClaimTypes.noSource)}
               />
               Could Not Access Resources
             </label>
             <label>
               <input
                 type="checkbox"
-                value="1"
-                checked={selectedTypes.includes(1)}
-                onChange={() => handleTypeChange(1)}
+                value={ClaimTypes.correct.toString()}
+                checked={selectedTypes.includes(ClaimTypes.correct)}
+                onChange={() => handleTypeChange(ClaimTypes.correct)}
               />
               All Correct
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value={ClaimTypes.textNotRelated.toString()}
+                checked={selectedTypes.includes(ClaimTypes.textNotRelated)}
+                onChange={() => handleTypeChange(ClaimTypes.textNotRelated)}
+              />
+              Source Text Irrelevant
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value={ClaimTypes.almostCorrect.toString()}
+                checked={selectedTypes.includes(ClaimTypes.almostCorrect)}
+                onChange={() => handleTypeChange(ClaimTypes.almostCorrect)}
+              />
+              Almost Correct
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                value={ClaimTypes.mightBeCorrect.toString()}
+                checked={selectedTypes.includes(ClaimTypes.mightBeCorrect)}
+                onChange={() => handleTypeChange(ClaimTypes.mightBeCorrect)}
+              />
+              Might Be Correct/Controversial
             </label>
           </div>
         </>

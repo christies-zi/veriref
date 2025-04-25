@@ -8,8 +8,20 @@ import { None } from "framer-motion";
 import Typewriter from "./components/Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 
+export enum ClaimTypes {
+  notAnalysing = 0,
+  correct = 1,
+  incorrect = 2,
+  cannotSay = 3,
+  noSource = 4,
+  processing = 5,
+  almostCorrect = 6, 
+  mightBeCorrect = 7, 
+  textNotRelated = 8
+}
+
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const clientId = useRef<string>(uuidv4())
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
@@ -18,7 +30,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [processingInput, setProcessingInput] = useState(true);
-  const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>(Array.from({ length: ClaimTypes.textNotRelated - ClaimTypes.correct + 1 }, (_, i) => ClaimTypes.correct + i));
   const [infoText, setInfoText] = useState<string | null>(null);
   const [infoTextState, setInfoTextState] = useState<number>(5);
 
@@ -54,7 +66,7 @@ function App() {
     }
     setIsLoading(true);
     setSentences([]);
-    setInfoTextState(5);
+    setInfoTextState(ClaimTypes.processing);
     setInfoText("Loading");
 
     try {
@@ -319,38 +331,65 @@ function App() {
         <label>
           <input
             type="checkbox"
-            value="2"
-            checked={claimTypesToAnalyse.includes(2)}
-            onChange={() => handleTypesToAnalyseChange(2)}
+            value={ClaimTypes.incorrect.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.incorrect)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.incorrect)}
           />
           Wrong Claims
         </label>
         <label>
           <input
             type="checkbox"
-            value="3"
-            checked={claimTypesToAnalyse.includes(3)}
-            onChange={() => handleTypesToAnalyseChange(3)}
+            value={ClaimTypes.cannotSay.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.cannotSay)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.cannotSay)}
           />
           Not Given Claims
         </label>
         <label>
           <input
             type="checkbox"
-            value="4"
-            checked={claimTypesToAnalyse.includes(4)}
-            onChange={() => handleTypesToAnalyseChange(4)}
+            value={ClaimTypes.noSource.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.noSource)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.noSource)}
           />
           Could Not Access Resources
         </label>
         <label>
           <input
             type="checkbox"
-            value="1"
-            checked={claimTypesToAnalyse.includes(1)}
-            onChange={() => handleTypesToAnalyseChange(1)}
+            value={ClaimTypes.correct.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.correct)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.correct)}
           />
           Correct claims
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value={ClaimTypes.almostCorrect.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.almostCorrect)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.almostCorrect)}
+          />
+          Almost correct claims
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value={ClaimTypes.mightBeCorrect.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.mightBeCorrect)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.mightBeCorrect)}
+          />
+          Claims that might be correct
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            value={ClaimTypes.textNotRelated.toString()}
+            checked={claimTypesToAnalyse.includes(ClaimTypes.textNotRelated)}
+            onChange={() => handleTypesToAnalyseChange(ClaimTypes.textNotRelated)}
+          />
+          Source text not relevant
         </label>
       </div>
 
@@ -359,11 +398,11 @@ function App() {
       </button>
 
       {infoText && <>
-        {infoTextState === 5 &&
+        {infoTextState === ClaimTypes.processing &&
           <div style={{ textAlign: "center", marginTop: "50px" }}>
             <GradientText text={infoText} state={infoTextState} />
           </div>}
-        {infoTextState !== 5 &&
+        {infoTextState !== ClaimTypes.processing &&
           <>
             <div style={{ marginTop: "50px" }}>
               <Typewriter text={infoText} />
