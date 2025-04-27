@@ -7,6 +7,7 @@ import GradientText from "./components/GradientText";
 import { None } from "framer-motion";
 import Typewriter from "./components/Typewriter";
 import { v4 as uuidv4 } from 'uuid';
+import Select from 'react-select';
 
 export enum ClaimTypes {
   notAnalysing = 0,
@@ -15,8 +16,8 @@ export enum ClaimTypes {
   cannotSay = 3,
   noSource = 4,
   processing = 5,
-  almostCorrect = 6, 
-  mightBeCorrect = 7, 
+  almostCorrect = 6,
+  mightBeCorrect = 7,
   textNotRelated = 8
 }
 
@@ -33,6 +34,17 @@ function App() {
   const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>(Array.from({ length: ClaimTypes.textNotRelated - ClaimTypes.correct + 1 }, (_, i) => ClaimTypes.correct + i));
   const [infoText, setInfoText] = useState<string | null>(null);
   const [infoTextState, setInfoTextState] = useState<number>(5);
+
+
+  const claimOptions = [
+    { value: ClaimTypes.incorrect, label: 'Wrong' },
+    { value: ClaimTypes.cannotSay, label: 'Inconclusive' },
+    { value: ClaimTypes.noSource, label: 'Could Not Access Resources' },
+    { value: ClaimTypes.correct, label: 'Correct' },
+    { value: ClaimTypes.almostCorrect, label: 'Almost Correct' },
+    { value: ClaimTypes.mightBeCorrect, label: 'Controversial' },
+    { value: ClaimTypes.textNotRelated, label: 'Source text not relevant' },
+  ];
 
   const handleFileInput = (e) => {
     const file = e.target.files[0];
@@ -294,15 +306,21 @@ function App() {
     );
   };
 
+  const handleClaimTypesChange = (selectedTypes: ClaimTypes[]) => {
+    setClaimTypesToAnalyse(selectedTypes);
+  };
+
+
   return (
     <div className="app-container">
       <h1>Veriref</h1>
 
       <div className="input-section">
-        <div className="input-group">
+        <div className="input-group centered">
           <label htmlFor="fileUpload" className="input-label">
             Information to be Verified (Upload PDF or Enter Text):
           </label>
+
           <input
             type="file"
             accept=".pdf"
@@ -310,8 +328,11 @@ function App() {
             onChange={handleFileInput}
             className="input-file"
           />
+
+          <div className="or-divider">or</div>
+
           <textarea
-            placeholder="Or enter plain text"
+            placeholder="Enter plain text"
             value={textInput}
             onChange={handleAdjustHeight}
             onInput={handleTextInput}
@@ -323,102 +344,64 @@ function App() {
 
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
-      <label className="input-label">
-        Select claim types to analyse:
-      </label>
+      <div className="input-group">
+        <label className="input-label">Select claim types to analyse:</label>
 
-      <div className="filter-options">
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.incorrect.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.incorrect)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.incorrect)}
-          />
-          Wrong Claims
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.cannotSay.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.cannotSay)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.cannotSay)}
-          />
-          Not Given Claims
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.noSource.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.noSource)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.noSource)}
-          />
-          Could Not Access Resources
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.correct.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.correct)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.correct)}
-          />
-          Correct claims
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.almostCorrect.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.almostCorrect)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.almostCorrect)}
-          />
-          Almost correct claims
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.mightBeCorrect.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.mightBeCorrect)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.mightBeCorrect)}
-          />
-          Claims that might be correct
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            value={ClaimTypes.textNotRelated.toString()}
-            checked={claimTypesToAnalyse.includes(ClaimTypes.textNotRelated)}
-            onChange={() => handleTypesToAnalyseChange(ClaimTypes.textNotRelated)}
-          />
-          Source text not relevant
-        </label>
+        <Select
+          options={claimOptions}
+          isMulti
+          value={claimOptions
+            .filter(option => claimTypesToAnalyse.includes(option.value))
+            // We need to keep both 'value' and 'label' properties to display the label in the selected items
+          }
+          onChange={(selected) => {
+            const selectedValues = (selected as unknown as { value: ClaimTypes }[]).map(opt => opt.value);
+            setClaimTypesToAnalyse(selectedValues);
+          }}
+          className="multi-select"
+          classNamePrefix="select"
+        />
+
+
       </div>
 
       <button onClick={handleSubmit} className="submit-button">
         Submit
       </button>
 
-      {infoText && <>
-        {infoTextState === ClaimTypes.processing &&
-          <div style={{ textAlign: "center", marginTop: "50px" }}>
-            <GradientText text={infoText} state={infoTextState} />
-          </div>}
-        {infoTextState !== ClaimTypes.processing &&
-          <>
-            <div style={{ marginTop: "50px" }}>
+      {infoText && (
+        <>
+          {infoTextState === ClaimTypes.processing ? (
+            <div className="centered-text">
+              <GradientText text={infoText} state={infoTextState} />
+            </div>
+          ) : (
+            <div className="centered-text">
               <Typewriter text={infoText} />
             </div>
-          </>
-        }
-      </>}
+          )}
+        </>
+      )}
 
+      {sentences.length > 0 && (
+        <>
+          <h3 className="section-title">Detailed sentence-by-sentence analysis:</h3>
+          <SentencesComponent
+            inputSentences={sentences}
+            onSentencesChange={handleSentencesChange}
+            typesToAnalyse={claimTypesToAnalyse}
+            clientId={clientId}
+          />
+        </>
+      )}
 
-
-
-      {sentences.length !== 0 && <h3>Detailed sentence by sentence analysis:</h3>}
-
-      {sentences.length !== 0 && <SentencesComponent inputSentences={sentences} onSentencesChange={handleSentencesChange} typesToAnalyse={claimTypesToAnalyse} clientId={clientId} />}
-      {!processingInput && <button onClick={handleFileRequest} className="submit-button">Generate Report</button>}
+      {!processingInput && (
+        <button onClick={handleFileRequest} className="submit-button">
+          Generate Report
+        </button>
+      )}
     </div>
+
   );
 }
 

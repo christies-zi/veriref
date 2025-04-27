@@ -2,23 +2,33 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  font-family: 'Poppins', 'Roboto', Arial, sans-serif;
+  background-color: #f9fafb;
   color: #333;
 }
 
 .app-container {
-  max-width: 600px;
+  max-width: 700px;
   margin: 40px auto;
-  padding: 20px;
+  padding: 30px;
   background: white;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
 }
 
 h1 {
   text-align: center;
-  color: #4CAF50;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #22c55e;
+  margin-bottom: 10px;
+}
+
+p.subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 30px;
 }
 
 .input-section {
@@ -26,12 +36,12 @@ h1 {
 }
 
 .input-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .input-label {
   display: block;
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 8px;
   color: #555;
 }
@@ -39,48 +49,58 @@ h1 {
 .input-file,
 .input-text {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 12px;
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  font-size: 15px;
   outline: none;
-  transition: border-color 0.3s;
+  background-color: #f9fafb;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.input-file:hover,
+.input-text:hover {
+  border-color: #22c55e;
+  background-color: #ffffff;
 }
 
 .input-file:focus,
 .input-text:focus {
-  border-color: #4CAF50;
+  border-color: #22c55e;
+  background-color: #ffffff;
 }
 
 .submit-button {
   display: block;
   width: 100%;
-  padding: 12px;
-  background-color: #4CAF50;
+  padding: 14px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
 }
 
 .submit-button:hover {
-  background-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(34, 197, 94, 0.4);
 }
 
 .output-section {
-  margin-top: 20px;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  margin-top: 30px;
+  padding: 20px;
+  background: #f3f4f6;
+  border-radius: 10px;
 }
 
 .output-section h3 {
   margin: 0 0 10px;
-  display: 'inline-block';
-  position: 'relative';
+  font-size: 20px;
+  color: #333;
 }
 
 /* Style for the header */
@@ -94,35 +114,34 @@ h1 {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 14px;
-  height: 14px;
-  border: 2px solid black; /* Black border for the circle */
-  color: black; /* Black "i" text */
-  border-radius: 50%; /* Make it circular */
-  font-size: 12px; /* Size of the "i" */
-  font-weight: bold; /* Bold "i" */
-  text-align: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #4b5563;
+  color: #4b5563;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
   cursor: pointer;
-  margin-right: 8px;
+  margin-left: 8px;
   position: relative;
-  background-color: transparent; /* Transparent background */
+  background-color: white;
 }
 
 /* Style for the tooltip */
 .tooltip {
   visibility: hidden;
-  width: 200px;
-  background-color: #f9f9f9;
-  color: #000;
+  width: 220px;
+  background-color: white;
+  color: #111;
   text-align: center;
-  border-radius: 5px;
-  padding: 8px;
+  border-radius: 8px;
+  padding: 10px;
   position: absolute;
   z-index: 1;
   bottom: 125%;
   left: 50%;
-  margin-left: -100px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  margin-left: -110px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 /* Show the tooltip on hover */
@@ -132,55 +151,137 @@ h1 {
 
 .output-section p {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: #333;
 }
 
 .input-textarea {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 15px;
   resize: none;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s;
 }
 
 .input-textarea:focus {
-  border-color: #4CAF50;
+  border-color: #22c55e;
+  background-color: #ffffff;
 }
 
 .error-message {
-  color: red;
-  font-size: 14px;
+  color: #ef4444;
+  font-size: 15px;
   margin-top: 10px;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .loading-spinner {
   margin-top: 20px;
-  font-size: 16px;
-  color: #007bff;
+  font-size: 17px;
+  color: #3b82f6;
   font-weight: bold;
-  display: inline-block;
   text-align: center;
 }
 
 .filter-options {
   margin-bottom: 20px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
 }
 
 .filter-options label {
   display: flex;
   align-items: center;
+  background: #f9fafb;
+  padding: 8px 12px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  border: 1px solid #e5e7eb;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.filter-options label:hover {
+  background-color: #e0f2fe;
+  border-color: #93c5fd;
 }
 
 .filter-options input {
-  margin-right: 5px;
+  margin-right: 8px;
+  accent-color: #22c55e;
+}
+
+/* Fix centering for inputs */
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Small divider between file upload and textarea */
+.or-divider {
+  margin: 10px 0;
+  font-size: 14px;
+  color: #777;
+}
+
+/* Center text when needed */
+.centered-text {
+  text-align: center;
+  margin-top: 50px;
+}
+
+/* Consistent section title */
+.section-title {
+  margin-top: 50px;
+  text-align: center;
+  font-size: 20px;
+  color: #4CAF50;
+}
+
+/* Make file input and textarea the same width */
+.input-file,
+.input-textarea {
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Align "Select claim types" better */
+.input-group {
+  margin-top: 30px;
+}
+
+/* Fix checkbox gap */
+.filter-options {
+  justify-content: center;
+}
+
+.select__control {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  min-height: 48px;
+}
+
+.select__multi-value {
+  background-color: #e0f2f1;
+  color: #00796b;
+  border-radius: 4px;
+}
+
+.select__option {
+  display: flex;
+  align-items: center;
+}
+
+.select__option--is-selected {
+  background-color: #c8e6c9;
+}
+
+.select__option--is-focused {
+  background-color: #f1f8e9;
 }
