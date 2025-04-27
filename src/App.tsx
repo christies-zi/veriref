@@ -8,6 +8,7 @@ import { None } from "framer-motion";
 import Typewriter from "./components/Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 import Select from 'react-select';
+import image from './assets/image.png';
 
 export enum ClaimTypes {
   notAnalysing = 0,
@@ -37,13 +38,13 @@ function App() {
 
 
   const claimOptions = [
-    { value: ClaimTypes.incorrect, label: 'Wrong' },
-    { value: ClaimTypes.cannotSay, label: 'Inconclusive' },
-    { value: ClaimTypes.noSource, label: 'Could Not Access Resources' },
-    { value: ClaimTypes.correct, label: 'Correct' },
-    { value: ClaimTypes.almostCorrect, label: 'Almost Correct' },
-    { value: ClaimTypes.mightBeCorrect, label: 'Controversial' },
-    { value: ClaimTypes.textNotRelated, label: 'Source text not relevant' },
+    { value: ClaimTypes.incorrect, label: '❌ Wrong' },
+    { value: ClaimTypes.cannotSay, label: '🤷 Inconclusive' },
+    { value: ClaimTypes.noSource, label: '⛔ Could Not Access Source' },
+    { value: ClaimTypes.correct, label: '✅ Correct' },
+    { value: ClaimTypes.almostCorrect, label: '☑️ Almost Correct' },
+    { value: ClaimTypes.mightBeCorrect, label: '⚠️ Controversial' },
+    { value: ClaimTypes.textNotRelated, label: '🙅🏻 Source text not relevant' },
   ];
 
   const handleFileInput = (e) => {
@@ -313,8 +314,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <h1>Veriref</h1>
-
+      <div className="image-container"><img src={image} alt="Logo" className="logo"/></div>
       <div className="input-section">
         <div className="input-group centered">
           <label htmlFor="fileUpload" className="input-label">
@@ -345,8 +345,8 @@ function App() {
       {errorMessage && <p className="error-message">{errorMessage}</p>}
 
       <div className="input-group">
+      <div className="select-group">
         <label className="input-label">Select claim types to analyse:</label>
-
         <Select
           options={claimOptions}
           isMulti
@@ -361,6 +361,7 @@ function App() {
           className="multi-select"
           classNamePrefix="select"
         />
+        </div>
 
 
       </div>
