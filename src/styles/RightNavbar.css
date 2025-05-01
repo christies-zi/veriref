@@ -1,0 +1,23 @@
+.right-navbar {
+position: fixed;
+top: 0;
+right: 0;
+width: 5vw; /* 10% of screen width */
+height: 100vh;
+background-color: #f9fafb;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding-top: 4vh; /* slightly below header */
+z-index: 900;
+}
+  
+.nav-button {
+background: none;
+border: none;
+color: black;
+font-size: 2vw;
+margin: 5vh 0;
+cursor: pointer;
+}
+  
