@@ -23,7 +23,7 @@ export enum ClaimTypes {
 }
 
 function App() {
-  const isLocal = false;
+  const isLocal = true;
   const clientId = useRef<string>(uuidv4())
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [fileInput, setFileInput] = useState(null); // Stores the uploaded PDF file
@@ -44,7 +44,7 @@ function App() {
     { value: ClaimTypes.correct, label: '✅ Correct' },
     { value: ClaimTypes.almostCorrect, label: '☑️ Almost Correct' },
     { value: ClaimTypes.mightBeCorrect, label: '⚠️ Controversial' },
-    { value: ClaimTypes.textNotRelated, label: '🙅🏻 Source text not relevant' },
+    { value: ClaimTypes.textNotRelated, label: '🔎 Source Not Relevant' },
   ];
 
   const handleFileInput = (e) => {
