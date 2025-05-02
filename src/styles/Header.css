@@ -1,0 +1,22 @@
+.header {
+  margin: 0;
+  padding: 0 2%;
+  width: 100%;
+  height: 10vh; /* 10% of viewport height */
+  display: flex;
+  align-items: center;
+  background-color: #f9fafb; /* transparent */
+  z-index: 1000;
+}
+
+.image-container {
+  display: flex;
+  justify-content: left;
+  align-items: left;
+}
+
+.logo {
+  max-width: auto;
+  height: 8vh;
+  padding: 0;
+}
