@@ -8,7 +8,7 @@ const Home: React.FC = () => {
   return (
     <div className="home-container">
       <div className="button-group">
-        <button className="submit-button" onClick={() => navigate('/new')}>
+        <button className="submit-button" onClick={() => navigate('/verify')}>
           Verify New Text
         </button>
         <button className="submit-button" onClick={() => navigate('/help')}>
@@ -17,7 +17,7 @@ const Home: React.FC = () => {
       </div>
       <p className="description">
         VeriRef helps you identify misinformation in text using powerful AI verification tools built on Mistral.
-        Upload or enter text, and let the system analyze it for factual accuracy.
+        Upload or enter text, and let the system analyse it for factual accuracy.
       </p>
     </div>
   );

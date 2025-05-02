@@ -5,6 +5,8 @@ import RightNavbar from './components/RightNavbar';
 import Home from './components/Home'
 import './styles/App.css';
 import VerifyPage from './components/VerifyPage'
+import SentencesComponent from './components/SentencesComponent';
+import { PdfProvider } from './components/PdfContext';
 
 
 export enum ClaimTypes {
@@ -27,11 +29,13 @@ const App: React.FC = () => {
       <Header />
       <RightNavbar />
       <main className="main-content">
+        <PdfProvider>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/new" element={<VerifyPage key={location.key}/>} />
-          {/* <Route path="/help" element={<HelpPage />} /> */}
+          <Route path="/verify" element={<VerifyPage key={location.key}/>} />
+          <Route path="/result" element={<SentencesComponent />} />
         </Routes>
+        </PdfProvider>
       </main>
     </>
   );

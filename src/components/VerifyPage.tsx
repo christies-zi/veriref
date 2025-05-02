@@ -9,6 +9,8 @@ import Typewriter from "./Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 import Select from 'react-select';
 import { ClaimTypes } from "../App.tsx";
+import { useNavigate } from 'react-router-dom';
+import { usePdf } from "./PdfContext.tsx";
 
 function VerifyPage() {
     const isLocal = true;
@@ -23,6 +25,8 @@ function VerifyPage() {
     const [claimTypesToAnalyse, setClaimTypesToAnalyse] = useState<number[]>(Array.from({ length: ClaimTypes.textNotRelated - ClaimTypes.correct + 1 }, (_, i) => ClaimTypes.correct + i));
     const [infoText, setInfoText] = useState<string | null>(null);
     const [infoTextState, setInfoTextState] = useState<number>(5);
+    const { setPdfFile, setInputText, inputText, pdfFile } = usePdf();
+    const navigate = useNavigate();
 
 
     const claimOptions = [
@@ -74,8 +78,12 @@ function VerifyPage() {
             const formData = new FormData();
             if (fileInput) {
                 formData.append("file", fileInput);
+                setPdfFile(fileInput);
+                setInputText(null);
             } else if (textInput) {
                 formData.append("textInput", textInput);
+                setInputText(textInput);
+                setPdfFile(null);
             }
 
             formData.append("typesToAnalyse", JSON.stringify(claimTypesToAnalyse));
@@ -89,114 +97,119 @@ function VerifyPage() {
             });
 
             if (response.data.jobId) {
-                const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}/${clientId.current}`);
+                const jobId = response.data.jobId;
+                const numbers = claimTypesToAnalyse;
+                const numberString = numbers.join(',');
+                navigate(`/result?jobId=${encodeURIComponent(jobId)}&clientId=${encodeURIComponent(clientId.current)}&numbers=${numberString}`);
 
-                eventSource.onmessage = (event) => {
-                    let msg = JSON.parse(event.data);
+                // const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${response.data.jobId}/${clientId.current}`);
 
-                    if (msg.messageType === "end") {
-                        eventSource.close();
-                        setProcessingInput(false);
-                    } else if (msg.messageType === "sentences") {
-                        setSentences(msg.sentences);
-                    } else if (msg.messageType === "claims") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "claimAnswer") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex
-                                    ? {
-                                        ...sentence,
-                                        claims: sentence.claims.map((claim, idx) =>
-                                            idx === msg.claimIndex ? msg.claim : claim
-                                        )
-                                    }
-                                    : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "claimExplanation") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex
-                                    ? {
-                                        ...sentence,
-                                        claims: sentence.claims.map((claim, idx) =>
-                                            idx === msg.claimIndex ? msg.claim : claim
-                                        )
-                                    }
-                                    : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "claimReferences") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex
-                                    ? {
-                                        ...sentence,
-                                        claims: sentence.claims.map((claim, idx) =>
-                                            idx === msg.claimIndex ? msg.claim : claim
-                                        )
-                                    }
-                                    : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "claimNoResource") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "sentenceProcessingTextSources") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex ? {
-                                    ...sentence,
-                                    processingText: msg.processingText,
-                                    processingTextState: msg.processingTextState,
-                                    prevSentenceWithContext: msg.prevSentenceWithContext,
-                                    keywords: msg.keywords,
-                                    summary: msg.summary,
-                                    paragraphSummary: msg.paragraphSummary,
-                                    sources: msg.sources
-                                } : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "sentenceProcessingText") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex ? {
-                                    ...sentence,
-                                    processingText: msg.processingText,
-                                    processingTextState: msg.processingTextState,
-                                    prevSentenceWithContext: msg.prevSentenceWithContext,
-                                    keywords: msg.keywords,
-                                    summary: msg.summary,
-                                    paragraphSummary: msg.paragraphSummary,
-                                } : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "claimProcessingText") {
-                        setSentences((prevSentences) =>
-                            prevSentences.map((sentence, k) =>
-                                k === msg.sentenceIndex
-                                    ? {
-                                        ...sentence,
-                                        claims: sentence.claims.map((claim, idx) =>
-                                            idx === msg.claimIndex ? msg.claim : claim
-                                        )
-                                    }
-                                    : sentence
-                            )
-                        );
-                    } else if (msg.messageType === "generalMessage") {
-                        setInfoTextState(msg.messageState);
-                        setInfoText(msg.message);
-                    }
-                };
+                // eventSource.onmessage = (event) => {
+                //     let msg = JSON.parse(event.data);
+
+                //     if (msg.messageType === "end") {
+                //         eventSource.close();
+                //         setProcessingInput(false);
+                //     } else if (msg.messageType === "sentences") {
+                //         setSentences(msg.sentences);
+                //     } else if (msg.messageType === "claims") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex ? { ...sentence, claims: msg.claims } : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "claimAnswer") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex
+                //                     ? {
+                //                         ...sentence,
+                //                         claims: sentence.claims.map((claim, idx) =>
+                //                             idx === msg.claimIndex ? msg.claim : claim
+                //                         )
+                //                     }
+                //                     : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "claimExplanation") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex
+                //                     ? {
+                //                         ...sentence,
+                //                         claims: sentence.claims.map((claim, idx) =>
+                //                             idx === msg.claimIndex ? msg.claim : claim
+                //                         )
+                //                     }
+                //                     : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "claimReferences") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex
+                //                     ? {
+                //                         ...sentence,
+                //                         claims: sentence.claims.map((claim, idx) =>
+                //                             idx === msg.claimIndex ? msg.claim : claim
+                //                         )
+                //                     }
+                //                     : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "claimNoResource") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex ? { ...sentence, claims: [msg.claim] } : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "sentenceProcessingTextSources") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex ? {
+                //                     ...sentence,
+                //                     processingText: msg.processingText,
+                //                     processingTextState: msg.processingTextState,
+                //                     prevSentenceWithContext: msg.prevSentenceWithContext,
+                //                     keywords: msg.keywords,
+                //                     summary: msg.summary,
+                //                     paragraphSummary: msg.paragraphSummary,
+                //                     sources: msg.sources
+                //                 } : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "sentenceProcessingText") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex ? {
+                //                     ...sentence,
+                //                     processingText: msg.processingText,
+                //                     processingTextState: msg.processingTextState,
+                //                     prevSentenceWithContext: msg.prevSentenceWithContext,
+                //                     keywords: msg.keywords,
+                //                     summary: msg.summary,
+                //                     paragraphSummary: msg.paragraphSummary,
+                //                 } : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "claimProcessingText") {
+                //         setSentences((prevSentences) =>
+                //             prevSentences.map((sentence, k) =>
+                //                 k === msg.sentenceIndex
+                //                     ? {
+                //                         ...sentence,
+                //                         claims: sentence.claims.map((claim, idx) =>
+                //                             idx === msg.claimIndex ? msg.claim : claim
+                //                         )
+                //                     }
+                //                     : sentence
+                //             )
+                //         );
+                //     } else if (msg.messageType === "generalMessage") {
+                //         setInfoTextState(msg.messageState);
+                //         setInfoText(msg.message);
+                //     }
+                // };
 
             }
 
@@ -353,11 +366,17 @@ function VerifyPage() {
 
             </div>
 
+            {!isLoading &&
             <button onClick={handleSubmit} className="submit-button">
                 Submit
-            </button>
+            </button>} 
+            {isLoading && 
+                <div className="centered-text">
+                    <GradientText text="Loading..." state={ClaimTypes.processing} />
+                </div>
+            }
 
-            {infoText && (
+            {/* {infoText && (
                 <>
                     {infoTextState === ClaimTypes.processing ? (
                         <div className="centered-text">
@@ -387,7 +406,7 @@ function VerifyPage() {
                 <button onClick={handleFileRequest} className="submit-button">
                     Generate Report
                 </button>
-            )}
+            )} */}
         </div>
 
     );
