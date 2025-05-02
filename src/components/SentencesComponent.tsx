@@ -1,7 +1,7 @@
 import React, { useState, useEffect, MutableRefObject } from 'react';
 import "../styles/SentencesComponent.css";
 import SentenceComponent from './SentenceComponent';
-import { ClaimTypes } from '../App';
+import { ClaimTypes } from '../App.tsx';
 
 export type Claim = {
   claim: string;
