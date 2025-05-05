@@ -24,7 +24,7 @@ type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = false;
+    const isLocal = true;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -559,8 +559,8 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     </span>
                 </div>
             </div>
-            {expanded && (
-                <div className="claim-details">
+            {/* {expanded && ( */}
+                <div className="claim-details" style={{ display: expanded ? 'block' : 'none' }}>
                     {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
                     {claims.length !== 0 &&
                         <>
@@ -673,7 +673,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                             </button>
                         </>}
                     {reloading && <div className="loading-spinner">Reloading...</div>}
-                </div>)}
+                </div>
 
         </div>
     )

@@ -94,32 +94,28 @@ export default function Typewriter({text, speed = DEFAULT_MS, loop = false, rand
     if (!Array.isArray(text))
         text = [text]
 
-    useEffect( () => {
-        setTimeout( () => {
-            if (currentTextIndex === 0)
-                onStart();
-            if (currentTextIndex < text[currentStringIndex].length) {
-                setCurrentTextIndex(currentTextIndex + 1);
-            } else {
-                if (currentStringIndex < text.length-1) {
-                    setTimeout( () => {
-                        setCurrentTextIndex(0);
-                        setCurrentStringIndex( currentStringIndex + 1);
-                    }, delay);
-                } else {
-                    if (loop) {
-                        setTimeout( () => {
-                            setCurrentTextIndex(0);
-                            setCurrentStringIndex(0);
-                        }, delay);
-                    } else {
-                        
-                        onFinished();
-                    }
-                }
-            }
-        }, speed + (Math.random() * random));
-    });
+    useEffect(() => {
+      if (!text || !text[currentStringIndex]) return;
+  
+      const timeout = setTimeout(() => {
+          if (currentTextIndex === 0) onStart();
+  
+          if (currentTextIndex < text[currentStringIndex].length) {
+              setCurrentTextIndex(currentTextIndex + 1);
+          } else if (currentStringIndex < text.length - 1) {
+              setCurrentTextIndex(0);
+              setCurrentStringIndex(currentStringIndex + 1);
+          } else if (loop) {
+              setCurrentTextIndex(0);
+              setCurrentStringIndex(0);
+          } else {
+              onFinished();
+          }
+      }, speed + Math.random() * random);
+  
+      return () => clearTimeout(timeout);
+  }, [currentTextIndex, currentStringIndex, text]);
+  
 
     return (
         <span>
