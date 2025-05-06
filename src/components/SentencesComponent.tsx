@@ -67,10 +67,9 @@ const SentencesComponent: React.FC = () => {
     };
 
     const eventSource = new EventSource(`${BACKEND_SERVER}/launch_processing_job/${jobId}/${clientId}`);
-
+    setProcessing(true);
     eventSource.onmessage = (event) => {
       let msg = JSON.parse(event.data);
-
       if (msg.messageType === "end") {
         eventSource.close();
         setProcessing(false);
@@ -410,6 +409,7 @@ const SentencesComponent: React.FC = () => {
             </div>
           </div>
         </>)}
+        <div>THIS IS : {processing.toString()}</div>
       {!processing && (
         <button onClick={handleFileRequest} className="submit-button">
           Generate Report

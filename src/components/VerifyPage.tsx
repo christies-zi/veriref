@@ -36,7 +36,7 @@ function VerifyPage() {
         { value: ClaimTypes.correct, label: '✅ Correct' },
         { value: ClaimTypes.almostCorrect, label: '☑️ Almost Correct' },
         { value: ClaimTypes.mightBeCorrect, label: '🥊 Controversial' },
-        { value: ClaimTypes.textNotRelated, label: '🔎 Source Not Relevant' },
+        { value: ClaimTypes.textNotRelated, label: '⚠️ Error scraping the source.' },
     ];
 
     const handleFileInput = (e) => {
