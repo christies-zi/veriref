@@ -25,7 +25,7 @@ type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId, processing }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = true;
+    const isLocal = false;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -141,22 +141,22 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
         return <>
             {incorrectCnt > 0 && (
-                <span style={{ color: 'darkred' }}>{incorrectCnt} wrong claims in the input text detected</span>
+                <span style={{ color: 'darkred' }}>{incorrectCnt} - ❌</span>
             )}
             {incorrectCnt > 0 && cannotSayCnt > 0 && ', '}
             {cannotSayCnt > 0 && (
                 <span style={{ color: 'orange' }}>
-                    Could not check {cannotSayCnt} claims
+                    {cannotSayCnt} - 🤷
                 </span>
             )}
             {(incorrectCnt > 0 || cannotSayCnt > 0) && mightBeCorrectCnt > 0 && ', '}
             {mightBeCorrectCnt > 0 && (
                 <span style={{ color: 'darkorange' }}>
-                    {mightBeCorrectCnt} claims are controversial
+                    {mightBeCorrectCnt} - 🥊
                 </span>
             )}
             {incorrectCnt === 0 && cannotSayCnt === 0 && mightBeCorrectCnt === 0 && (
-                <span style={{ color: 'darkgreen' }}>No errors in the input text detected</span>
+                <span style={{ color: 'darkgreen' }}>All Correct ✅ </span>
             )}
         </>
     };
@@ -604,8 +604,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                             </span>
                                                             {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={ClaimTypes.processing} />}
                                                             {claim.explanation && <Typewriter text={claim.explanation} />}
-                                                        </>
+                                                        </> 
                                                     </p>}
+                                                     
                                                 {claim.explanation && claim.references && claim.type !== ClaimTypes.textNotRelated && claim.type !== ClaimTypes.noSource && getReferenceInfo(claim.type, claim.references, claim.processingText)}
                                                 {claim.otherSourcesConsidered &&
                                                     <p className="claim-explanation">

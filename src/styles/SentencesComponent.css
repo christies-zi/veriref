@@ -338,6 +338,19 @@ h1 {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  width: 60%;
+  max-width: 60%;
+  min-width: 60%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  margin-bottom: 30px;
+}
+
+.select-group-sentence {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   max-width: 100%;
   min-width: 100%;
@@ -351,6 +364,7 @@ h1 {
   justify-content: space-between;
   width: 100%;
 }
+
 /* @keyframes blink {
     to {
         visibility: hidden;
