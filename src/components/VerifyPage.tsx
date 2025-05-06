@@ -8,9 +8,10 @@ import { None } from "framer-motion";
 import Typewriter from "./Typewriter";
 import { v4 as uuidv4 } from 'uuid';
 import Select from 'react-select';
-import { ClaimTypes } from "../App.tsx";
+import { ClaimTypes } from './CommonTypes';
 import { useNavigate } from 'react-router-dom';
 import { usePdf } from "./PdfContext.tsx";
+import { claimOptions } from "./CommonTypes";
 
 function VerifyPage() {
     const isLocal = true;
@@ -27,17 +28,6 @@ function VerifyPage() {
     const [infoTextState, setInfoTextState] = useState<number>(5);
     const { setPdfFile, setInputText, inputText, pdfFile } = usePdf();
     const navigate = useNavigate();
-
-
-    const claimOptions = [
-        { value: ClaimTypes.incorrect, label: '❌ Wrong' },
-        { value: ClaimTypes.cannotSay, label: '🤷 Inconclusive' },
-        { value: ClaimTypes.noSource, label: '⛔ Could Not Access Source' },
-        { value: ClaimTypes.correct, label: '✅ Correct' },
-        { value: ClaimTypes.almostCorrect, label: '☑️ Almost Correct' },
-        { value: ClaimTypes.mightBeCorrect, label: '🥊 Controversial' },
-        { value: ClaimTypes.textNotRelated, label: '⚠️ Error scraping the source.' },
-    ];
 
     const handleFileInput = (e) => {
         const file = e.target.files[0];
@@ -332,7 +322,7 @@ function VerifyPage() {
                     <div className="or-divider">or</div>
 
                     <textarea
-                        placeholder="Enter plain text"
+                        placeholder="Enter plain text to verify. Use Vancouver referencing style for adding any sources."
                         value={textInput}
                         onChange={handleAdjustHeight}
                         onInput={handleTextInput}

@@ -2,11 +2,12 @@ import React, { useState, useEffect, MutableRefObject } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import "../styles/SentencesComponent.css";
 import SentenceComponent from './SentenceComponent';
-import { ClaimTypes } from '../App.tsx';
+import { claimOptions, ClaimTypes } from './CommonTypes';
 import { usePdf } from './PdfContext.tsx';
 import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
 import axios from 'axios';
+import Select from 'react-select';
 
 export type Claim = {
   claim: string;
@@ -59,7 +60,7 @@ const SentencesComponent: React.FC = () => {
   useEffect(() => {
     setInfoText("Loading...");
     setProcessing(true);
-    
+
     if (!jobId || !clientId || !numbersParam) {
       setInfoText("Something went wrong... Try submitting again...");
       setInfoTextState(ClaimTypes.correct);
@@ -296,7 +297,7 @@ const SentencesComponent: React.FC = () => {
   });
 
   return (
-    <div>
+    <div className="main-section">
       {sentences.length > 0 && (
         <>
           <h3 className="section-title">Detailed sentence-by-sentence analysis:</h3>
@@ -324,98 +325,51 @@ const SentencesComponent: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="filter-options">
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.incorrect.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.incorrect)}
-                      onChange={() => handleTypeChange(ClaimTypes.incorrect)}
+
+                  <div className="select-group">
+                    <label>Select claim types to analyse:</label>
+                    <Select
+                      options={claimOptions}
+                      isMulti
+                      value={claimOptions.filter(option => selectedTypes.includes(option.value))}
+                      onChange={(selected) => {
+                        const selectedValues = (selected as unknown as { value: ClaimTypes }[]).map(opt => opt.value);
+                        setSelectedTypes(selectedValues);
+                      }}
+                      className="multi-select"
+                      classNamePrefix="select"
                     />
-                    Failed Checks
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.cannotSay.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.cannotSay)}
-                      onChange={() => handleTypeChange(ClaimTypes.cannotSay)}
-                    />
-                    Not Given
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.noSource.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.noSource)}
-                      onChange={() => handleTypeChange(ClaimTypes.noSource)}
-                    />
-                    Could Not Access Resources
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.correct.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.correct)}
-                      onChange={() => handleTypeChange(ClaimTypes.correct)}
-                    />
-                    All Correct
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.textNotRelated.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.textNotRelated)}
-                      onChange={() => handleTypeChange(ClaimTypes.textNotRelated)}
-                    />
-                    Source Text Irrelevant
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.almostCorrect.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.almostCorrect)}
-                      onChange={() => handleTypeChange(ClaimTypes.almostCorrect)}
-                    />
-                    Almost Correct
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      value={ClaimTypes.mightBeCorrect.toString()}
-                      checked={selectedTypes.includes(ClaimTypes.mightBeCorrect)}
-                      onChange={() => handleTypeChange(ClaimTypes.mightBeCorrect)}
-                    />
-                    Might Be Correct/Controversial
-                  </label>
-                </div>
+                  </div>
               </>
             )}
-            <div className="claims-container">
-              {sentences.map((sentence, i) =>
-                sentencePassesFilter[i] ? (
-                  <SentenceComponent
-                    key={i}
-                    sentenceExt={sentence}
-                    i={i}
-                    onSentenceChange={handleSentenceChange}
-                    typesToAnalyse={typesToAnalyse}
-                    processingText={sentence.processingText}
-                    processingTextState={sentence.processingTextState}
-                    clientId={clientId}
-                  />
-                ) : null
-              )}
-            </div>
+          <div className="claims-container">
+            {sentences.map((sentence, i) =>
+              sentencePassesFilter[i] ? (
+                <SentenceComponent
+                  key={i}
+                  sentenceExt={sentence}
+                  i={i}
+                  onSentenceChange={handleSentenceChange}
+                  typesToAnalyse={typesToAnalyse}
+                  processingText={sentence.processingText}
+                  processingTextState={sentence.processingTextState}
+                  clientId={clientId}
+                  processing={processing}
+                />
+              ) : null
+            )}
           </div>
-        </>)}
-        <div>THIS IS : {processing.toString()}</div>
-      {!processing && (
-        <button onClick={handleFileRequest} className="submit-button">
-          Generate Report
-        </button>
-      )}
-    </div>
+        </div>
+    </>)
+}
+{
+  !processing && (
+    <button onClick={handleFileRequest} className="submit-button">
+      Generate Report
+    </button>
+  )
+}
+    </div >
   );
 };
 

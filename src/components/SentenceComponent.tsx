@@ -6,7 +6,7 @@ import GradientText from './GradientText.tsx';
 import Typewriter from './Typewriter.tsx';
 import { motion, AnimatePresence } from "framer-motion";
 import { use } from 'framer-motion/m';
-import { ClaimTypes } from '../App.tsx';
+import { ClaimTypes } from './CommonTypes';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface SentenceComponentProps {
@@ -17,11 +17,12 @@ interface SentenceComponentProps {
     processingText: string;
     processingTextState: number;
     clientId: string | null;
+    processing: boolean;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId, processing }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = true;
@@ -560,120 +561,141 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 </div>
             </div>
             {/* {expanded && ( */}
-                <div className="claim-details" style={{ display: expanded ? 'block' : 'none' }}>
-                    {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
-                    {claims.length !== 0 &&
-                        <>
-                            <AnimatePresence>
-                                <motion.div layout>
-                                    {sortedClaims.map((claim, j) => (
-                                        <motion.div
-                                            key={claim.claim}
-                                            layout
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: claim.fadingOut ? 0 : 1, y: claim.fadingOut ? -10 : 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            transition={{ type: "spring", stiffness: 100, damping: 15 }}
-                                            className="claim-item"
-                                        >
-                                            <div>
-                                                <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
-                                                    <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                                    {claim.type === ClaimTypes.processing && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
-                                                    {claim.answer && <p className="claim-answer">
-                                                        {claim.type !== ClaimTypes.noSource && claim.type !== ClaimTypes.textNotRelated && (
+            <div className="claim-details" style={{ display: expanded ? 'block' : 'none' }}>
+                {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
+                {claims.length !== 0 &&
+                    <>
+                        <AnimatePresence>
+                            <motion.div layout>
+                                {sortedClaims.map((claim, j) => (
+                                    <motion.div
+                                        key={claim.claim}
+                                        layout
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: claim.fadingOut ? 0 : 1, y: claim.fadingOut ? -10 : 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                                        className="claim-item"
+                                    >
+                                        <div>
+                                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
+                                                <p><GradientText text={claim.claim} state={claim.type} /></p>
+                                                {claim.type === ClaimTypes.processing && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
+                                                {claim.answer && <p className="claim-answer">
+                                                    {claim.type !== ClaimTypes.noSource && claim.type !== ClaimTypes.textNotRelated && (
+                                                        <span className="info-icon">
+                                                            i
+                                                            <span className="tooltip">
+                                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <Typewriter text={claim.answer} />
+                                                </p>}
+                                                {claim.answer &&
+                                                    <p className="claim-explanation">
+                                                        Explanation:
+                                                        <>
                                                             <span className="info-icon">
                                                                 i
                                                                 <span className="tooltip">
-                                                                    Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                                                    {getExplanationInfo(claim.type)}
                                                                 </span>
                                                             </span>
-                                                        )}
-                                                        <Typewriter text={claim.answer} />
+                                                            {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={ClaimTypes.processing} />}
+                                                            {claim.explanation && <Typewriter text={claim.explanation} />}
+                                                        </>
                                                     </p>}
-                                                    {claim.answer &&
-                                                        <p className="claim-explanation">
-                                                            Explanation:
-                                                            <>
-                                                                <span className="info-icon">
-                                                                    i
-                                                                    <span className="tooltip">
-                                                                        {getExplanationInfo(claim.type)}
-                                                                    </span>
+                                                {claim.explanation && claim.references && claim.type !== ClaimTypes.textNotRelated && claim.type !== ClaimTypes.noSource && getReferenceInfo(claim.type, claim.references, claim.processingText)}
+                                                {claim.otherSourcesConsidered &&
+                                                    <p className="claim-explanation">
+                                                        Other sources found and considered during the online search:
+                                                        <>
+                                                            <span className="info-icon">
+                                                                i
+                                                                <span className="tooltip">
+                                                                    The claim was analysed based on the top-5 search results. These are all the sources analysed, and the results of their analysis.
                                                                 </span>
-                                                                {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={ClaimTypes.processing} />}
-                                                                {claim.explanation && <Typewriter text={claim.explanation} />}
-                                                            </>
-                                                        </p>}
-                                                    {claim.explanation && claim.references && claim.type !== ClaimTypes.textNotRelated && claim.type !== ClaimTypes.noSource && getReferenceInfo(claim.type, claim.references, claim.processingText)}
-                                                    {claim.otherSourcesConsidered &&
-                                                        <p className="claim-explanation">
-                                                            Other sources found and considered during the online search:
-                                                            <>
-                                                                <span className="info-icon">
-                                                                    i
-                                                                    <span className="tooltip">
-                                                                        The claim was analysed based on the top-5 search results. These are all the sources analysed, and the results of their analysis.
-                                                                    </span>
-                                                                </span>
-                                                                <div>
-                                                                    <Typewriter text={claim.otherSourcesConsidered} />
-                                                                </div>
-                                                            </>
-                                                        </p>}
-                                                </div>
+                                                            </span>
+                                                            <div>
+                                                                <Typewriter text={claim.otherSourcesConsidered} />
+                                                            </div>
+                                                        </>
+                                                    </p>}
                                             </div>
-                                        </motion.div>
-                                    )
-                                    )}
-                                </motion.div>
-                            </AnimatePresence> </>}
-                    {claims.length !== 0 && claims.every((c) => c.type === ClaimTypes.noSource || c.references || (c.type === ClaimTypes.cannotSay && c.explanation) || c.type === ClaimTypes.textNotRelated) &&
-                        <>
-                            <div className="claim">
-                                {<div className="dropdown">
-                                    <div
-                                        className="claim-header"
-                                        onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
-                                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                                    >
-                                        <p>Add another source</p>
-                                        <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                            ▼
-                                        </span>
-                                    </div>
-                                    {isSourceDropdownOpen && (
-                                        <div className="dropdown-content">
-                                            <label htmlFor="fileUpload" className="input-label" />
-                                            <input
-                                                type="file"
-                                                accept=".pdf"
-                                                id={`fileUpload-${i}`}
-                                                onChange={handleFileInput}
-                                                className="file-input"
-                                            />
-                                            <textarea
-                                                placeholder="Or enter link or plain text"
-                                                value={textInput}
-                                                onChange={handleAdjustHeight}
-                                                onInput={handleTextInput}
-                                                rows={4}
-                                                className="text-input"
-                                            />
-                                            <button onClick={handleSourceSubmit} className="button">
-                                                Submit
-                                            </button>
-                                            {loadingSource && <div className="loading-spinner">Loading...</div>}
                                         </div>
-                                    )}
-                                </div>}
-                            </div>
-                            <button onClick={handleReload} className="button-big">
+                                    </motion.div>
+                                )
+                                )}
+                            </motion.div>
+                        </AnimatePresence> </>}
+                {claims.length !== 0 && claims.every((c) => c.type === ClaimTypes.noSource || c.references || (c.type === ClaimTypes.cannotSay && c.explanation) || c.type === ClaimTypes.textNotRelated) &&
+                    <>
+                        <div className="claim">
+                            {<div className="dropdown">
+                                <div
+                                    className="claim-header"
+                                    onClick={() => setSourceDropdownOpen(!isSourceDropdownOpen)}
+                                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                >
+                                    <p>Add another source</p>
+                                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
+                                        ▼
+                                    </span>
+                                </div>
+                                {isSourceDropdownOpen && (
+                                    <div className="dropdown-content">
+                                        <label htmlFor="fileUpload" className="input-label" />
+                                        <input
+                                            type="file"
+                                            accept=".pdf"
+                                            id={`fileUpload-${i}`}
+                                            onChange={handleFileInput}
+                                            className="file-input"
+                                        />
+                                        <textarea
+                                            placeholder="Or enter link or plain text"
+                                            value={textInput}
+                                            onChange={handleAdjustHeight}
+                                            onInput={handleTextInput}
+                                            rows={4}
+                                            className="text-input"
+                                        />
+                                        <div>
+                                            <div className="tooltip-container">
+                                                <button
+                                                    onClick={handleSourceSubmit}
+                                                    className={processing ? 'button-disabled' : 'button'}
+                                                    disabled={processing}>
+                                                    Submit
+                                                </button>
+                                                {processing && (
+                                                    <span className="tooltip-text">Please, wait for the rest of the input to be processed</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {loadingSource && <div className="loading-spinner">Loading...</div>}
+                                    </div>
+                                )}
+                            </div>}
+                        </div>
+                        <div className="tooltip-container">
+                            <button
+                                onClick={handleReload}
+                                className={processing ? 'button-big-disabled' : 'button-big'}
+                                disabled={processing}
+                            >
                                 Reload
                             </button>
-                        </>}
-                    {reloading && <div className="loading-spinner">Reloading...</div>}
-                </div>
+                            {processing && (
+                                <span className="tooltip-text">Please, wait for the rest of the input to be processed</span>
+                            )}
+                        </div>
+
+
+                    </>}
+                {reloading && <div className="loading-spinner">Reloading...</div>}
+            </div>
 
         </div>
     )

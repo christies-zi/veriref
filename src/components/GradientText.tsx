@@ -43,7 +43,7 @@
 
 import React, { useEffect, useState } from 'react';
 import '../styles/GradientText.css';
-import { ClaimTypes } from '../App';
+import { ClaimTypes } from './CommonTypes';
 
 interface GradientTextProps {
   text: string;
