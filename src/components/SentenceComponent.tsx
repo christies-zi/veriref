@@ -18,7 +18,7 @@ interface SentenceComponentProps {
     processingTextState: number;
     clientId: string | null;
     processing: boolean;
-    expandAll: boolean; 
+    expandAll: boolean;
     hideAll: boolean;
 }
 
@@ -27,7 +27,7 @@ type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId, processing, expandAll, hideAll }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
-    const isLocal = true;
+    const isLocal = false;
     const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
     const [expanded, setExpanded] = useState<boolean>(false);
     const [isPromptDropdownOpen, setPromptDropdownOpen] = useState<Array<boolean>>(new Array(claims.length).fill(false));
@@ -570,7 +570,6 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                     </span>
                 </div>
             </div>
-            {/* {expanded && ( */}
             <div className="claim-details" style={{ display: expanded ? 'block' : 'none' }}>
                 {claims.length === 0 && <div><GradientText text={processingText} state={processingTextState} /></div>}
                 {claims.length !== 0 &&
@@ -588,52 +587,81 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                         className="claim-item"
                                     >
                                         <div>
-                                            <div className="claim" key={`claim-${i}-${j}`} style={{ borderColor: getBackgroudColour(claim.type), borderWidth: '2px', borderStyle: 'solid' }}>
-                                                <p><GradientText text={claim.claim} state={claim.type} /></p>
-                                                {claim.type === ClaimTypes.processing && <p><GradientText text={claim.processingText} state={processingTextState} /></p>}
-                                                {claim.answer && <p className="claim-answer">
-                                                    {claim.type !== ClaimTypes.noSource && claim.type !== ClaimTypes.textNotRelated && (
-                                                        <span className="info-icon">
-                                                            i
-                                                            <span className="tooltip">
-                                                                Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
-                                                            </span>
-                                                        </span>
+                                            <div className="claim-item">
+                                                <div
+                                                    className="claim"
+                                                    key={`claim-${i}-${j}`}
+                                                    style={{
+                                                        borderColor: getBackgroudColour(claim.type),
+                                                        borderWidth: '2px',
+                                                        borderStyle: 'solid',
+                                                    }}
+                                                >
+                                                    <p><GradientText text={claim.claim} state={claim.type} /></p>
+
+                                                    {claim.type === ClaimTypes.processing && (
+                                                        <div className="claim-section-block">
+                                                            <GradientText text={claim.processingText} state={processingTextState} />
+                                                        </div>
                                                     )}
-                                                    <Typewriter text={claim.answer} />
-                                                </p>}
-                                                {claim.answer &&
-                                                    <p className="claim-explanation">
-                                                        Explanation:
-                                                        <>
-                                                            <span className="info-icon">
-                                                                i
-                                                                <span className="tooltip">
-                                                                    {getExplanationInfo(claim.type)}
+
+                                                    {claim.answer && (
+                                                        <div className="claim-section-block claim-answer-section">
+                                                            <p className="claim-answer">
+                                                                {claim.type !== ClaimTypes.noSource && claim.type !== ClaimTypes.textNotRelated && (
+                                                                    <span className="info-icon">
+                                                                        i
+                                                                        <span className="tooltip">
+                                                                            Based only on the input text say whether the following claim is true or false? Reply with 'Correct', 'Incorrect', or 'Cannot Say'.
+                                                                        </span>
+                                                                    </span>
+                                                                )}
+                                                                <Typewriter text={claim.answer} />
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {claim.answer && (
+                                                        <div className="claim-section-block claim-explanation-section">
+                                                            <p className="claim-explanation">
+                                                                Explanation:
+                                                                <span className="info-icon">
+                                                                    i
+                                                                    <span className="tooltip">{getExplanationInfo(claim.type)}</span>
                                                                 </span>
-                                                            </span>
-                                                            {claim.answer && !claim.explanation && <GradientText text={claim.processingText} state={ClaimTypes.processing} />}
-                                                            {claim.explanation && <Typewriter text={claim.explanation} />}
-                                                        </> 
-                                                    </p>}
-                                                     
-                                                {claim.explanation && claim.references && claim.type !== ClaimTypes.textNotRelated && claim.type !== ClaimTypes.noSource && getReferenceInfo(claim.type, claim.references, claim.processingText)}
-                                                {claim.otherSourcesConsidered &&
-                                                    <p className="claim-explanation">
-                                                        Other sources found and considered during the online search:
-                                                        <>
-                                                            <span className="info-icon">
-                                                                i
-                                                                <span className="tooltip">
-                                                                    The claim was analysed based on the top-5 search results. These are all the sources analysed, and the results of their analysis.
-                                                                </span>
-                                                            </span>
-                                                            <div>
-                                                                <Typewriter text={claim.otherSourcesConsidered} />
+                                                                {!claim.explanation && (
+                                                                    <GradientText text={claim.processingText} state={ClaimTypes.processing} />
+                                                                )}
+                                                                {claim.explanation && <Typewriter text={claim.explanation} />}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {claim.explanation && claim.references &&
+                                                        claim.type !== ClaimTypes.textNotRelated &&
+                                                        claim.type !== ClaimTypes.noSource && (
+                                                            <div className="claim-section-block claim-references-section">
+                                                                {getReferenceInfo(claim.type, claim.references, claim.processingText)}
                                                             </div>
-                                                        </>
-                                                    </p>}
+                                                        )}
+
+                                                    {claim.otherSourcesConsidered && (
+                                                        <div className="claim-section-block">
+                                                            <p className="claim-explanation">
+                                                                Other sources found and considered during the online search:
+                                                                <span className="info-icon">
+                                                                    i
+                                                                    <span className="tooltip">
+                                                                        The claim was analysed based on the top-5 search results.
+                                                                    </span>
+                                                                </span>
+                                                                <div><Typewriter text={claim.otherSourcesConsidered} /></div>
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
+
                                         </div>
                                     </motion.div>
                                 )
