@@ -54,8 +54,10 @@ const SentencesComponent: React.FC = () => {
   const [infoTextState, setInfoTextState] = useState<number>(ClaimTypes.processing);
   const { setPdfFile, setInputText, inputText, pdfFile } = usePdf();
   const [processing, setProcessing] = useState<boolean>(true);
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
+  const [expandAll, setExpandAll] = useState<boolean>(false);
+  const [hideAll, setHideAll] = useState<boolean>(false);
 
   useEffect(() => {
     setInfoText("Loading...");
@@ -326,49 +328,58 @@ const SentencesComponent: React.FC = () => {
                   />
                 </div>
 
-                  <div className="select-group">
-                    <label>Select claim types to analyse:</label>
-                    <Select
-                      options={claimOptions}
-                      isMulti
-                      value={claimOptions.filter(option => selectedTypes.includes(option.value))}
-                      onChange={(selected) => {
-                        const selectedValues = (selected as unknown as { value: ClaimTypes }[]).map(opt => opt.value);
-                        setSelectedTypes(selectedValues);
-                      }}
-                      className="multi-select"
-                      classNamePrefix="select"
-                    />
-                  </div>
+                <div className="select-group">
+                  <label>Select claim types to analyse:</label>
+                  <Select
+                    options={claimOptions}
+                    isMulti
+                    value={claimOptions.filter(option => selectedTypes.includes(option.value))}
+                    onChange={(selected) => {
+                      const selectedValues = (selected as unknown as { value: ClaimTypes }[]).map(opt => opt.value);
+                      setSelectedTypes(selectedValues);
+                    }}
+                    className="multi-select"
+                    classNamePrefix="select"
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '2rem', marginBottom: '30px' }}>
+                  <button className='button'
+                    onClick={() => setExpandAll(!expandAll)}>Expand All</button>
+                  <button className='button'
+                    onClick={() => setHideAll(!hideAll)}>Hide All</button>
+                </div>
               </>
             )}
-          <div className="claims-container">
-            {sentences.map((sentence, i) =>
-              sentencePassesFilter[i] ? (
-                <SentenceComponent
-                  key={i}
-                  sentenceExt={sentence}
-                  i={i}
-                  onSentenceChange={handleSentenceChange}
-                  typesToAnalyse={typesToAnalyse}
-                  processingText={sentence.processingText}
-                  processingTextState={sentence.processingTextState}
-                  clientId={clientId}
-                  processing={processing}
-                />
-              ) : null
-            )}
+            <div className="claims-container">
+              {sentences.map((sentence, i) =>
+                sentencePassesFilter[i] ? (
+                  <SentenceComponent
+                    key={i}
+                    sentenceExt={sentence}
+                    i={i}
+                    onSentenceChange={handleSentenceChange}
+                    typesToAnalyse={typesToAnalyse}
+                    processingText={sentence.processingText}
+                    processingTextState={sentence.processingTextState}
+                    clientId={clientId}
+                    processing={processing}
+                    expandAll={expandAll}
+                    hideAll={hideAll}
+                  />
+                ) : null
+              )}
+            </div>
           </div>
-        </div>
-    </>)
-}
-{
-  !processing && (
-    <button onClick={handleFileRequest} className="submit-button">
-      Generate Report
-    </button>
-  )
-}
+        </>)
+      }
+      {
+        !processing && (
+          <button onClick={handleFileRequest} className="submit-button">
+            Generate Report
+          </button>
+        )
+      }
     </div >
   );
 };
