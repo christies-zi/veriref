@@ -20,11 +20,12 @@ interface SentenceComponentProps {
     processing: boolean;
     expandAll: boolean;
     hideAll: boolean;
+    setParentProcessing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 type ExtendedClaim = Claim & { index: number, fadingOut: boolean };
 
-const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId, processing, expandAll, hideAll }) => {
+const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, onSentenceChange, typesToAnalyse, processingText, processingTextState, clientId, processing, expandAll, hideAll, setParentProcessing }) => {
     const [sentence, setSentence] = useState<Sentence>(sentenceExt);
     const [claims, setClaims] = useState<Claim[]>(sentence.claims);
     const isLocal = false;
@@ -247,6 +248,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     };
 
     const handleSourceSubmit = async () => {
+        setParentProcessing(true);
         if (!fileInput && !textInput) {
             return;
         }
@@ -293,6 +295,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
                     if (msg.messageType === "end") {
                         eventSource.close();
+                        setParentProcessing(false);
                     } else if (msg.messageType === "claims") {
 
                         setSentence(prev => {
@@ -401,6 +404,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         } catch (error) {
             console.error("Error processing inputs:", error);
             setClaims(prevClaims);
+            setParentProcessing(false);
         } finally {
             setLoadingSource(false);
         }
@@ -408,6 +412,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
     };
 
     const handleReload = async () => {
+        setParentProcessing(true);
         setLoadingSource(true);
         let prevClaims = claims;
         setClaims([]);
@@ -441,6 +446,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
                     if (msg.messageType === "end") {
                         eventSource.close();
+                        setParentProcessing(false);
                     } else if (msg.messageType === "claims") {
 
                         setSentence(prev => {
@@ -549,6 +555,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
         } catch (error) {
             console.error("Error processing inputs:", error);
             setClaims(prevClaims);
+            setParentProcessing(false);
         } finally {
             setLoadingSource(false);
         }

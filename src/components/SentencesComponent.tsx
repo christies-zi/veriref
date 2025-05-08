@@ -54,6 +54,7 @@ const SentencesComponent: React.FC = () => {
   const [infoTextState, setInfoTextState] = useState<number>(ClaimTypes.processing);
   const { setPdfFile, setInputText, inputText, pdfFile } = usePdf();
   const [processing, setProcessing] = useState<boolean>(true);
+  const [processingReport, setProcessingReport] = useState<boolean>(false);
   const isLocal = false;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [expandAll, setExpandAll] = useState<boolean>(false);
@@ -237,6 +238,7 @@ const SentencesComponent: React.FC = () => {
 
 
   const handleFileRequest = async () => {
+    setProcessingReport(true);
     const formData = new FormData();
     if (pdfFile) {
       formData.append("file", pdfFile);
@@ -283,6 +285,7 @@ const SentencesComponent: React.FC = () => {
       link.download = 'output.pdf';
       link.click();
       window.URL.revokeObjectURL(url);
+      setProcessingReport(false);
     } catch (error) {
       console.error('Error:', error);
       alert('Something went wrong. Please try again.');
@@ -363,23 +366,34 @@ const SentencesComponent: React.FC = () => {
                     processingText={sentence.processingText}
                     processingTextState={sentence.processingTextState}
                     clientId={clientId}
-                    processing={processing}
+                    processing={processing || processingReport}
                     expandAll={expandAll}
                     hideAll={hideAll}
+                    setParentProcessing={setProcessing}
                   />
                 ) : null
               )}
             </div>
           </div>
         </>)
-      }
-      {
-        !processing && (
-          <button onClick={handleFileRequest} className="submit-button">
+      }{
+        sentences.length !== 0 &&
+        (<div className="tooltip-container">
+          <button onClick={handleFileRequest} className={(processing || processingReport) ? 'button-big-disabled' : 'button-big'}>
             Generate Report
           </button>
-        )
+          {(processing || processingReport) && (
+            <span className="tooltip-text">Please, wait for the rest of the input to be processed</span>
+          )}
+        </div>)
+
       }
+      <div className="centered-text">
+        {processingReport && <GradientText text={'Generating PDF Report...'} state={ClaimTypes.processing} />}
+        {sentences.length == 0 &&
+          <GradientText text={'Loading...'} state={ClaimTypes.processing} />
+        }
+      </div>
     </div >
   );
 };

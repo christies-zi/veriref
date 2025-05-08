@@ -99,6 +99,24 @@ p.subtitle {
   box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
 }
 
+.submit-button-disabled {
+  display: block;
+  width: 30%;
+  padding: 14px;
+  margin: 0 auto; 
+  background: #d1d5db;
+  color: #6b7280;    
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: not-allowed;
+  box-shadow: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 10px rgba(90, 90, 90, 0.3);
+  margin-top: 30px;
+}
+
 
 .submit-button:hover {
   transform: translateY(-2px);
