@@ -379,7 +379,9 @@ const SentencesComponent: React.FC = () => {
       }{
         sentences.length !== 0 &&
         (<div className="tooltip-container">
-          <button onClick={handleFileRequest} className={(processing || processingReport) ? 'button-big-disabled' : 'button-big'}>
+          <button onClick={handleFileRequest}
+            className={(processing || processingReport) ? 'button-big-disabled' : 'button-big'}
+            disabled={processing || processingReport}>
             Generate Report
           </button>
           {(processing || processingReport) && (
