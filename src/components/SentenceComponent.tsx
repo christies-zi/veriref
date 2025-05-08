@@ -569,7 +569,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 onClick={() => setExpanded(!expanded)}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
             >
-                <p>{sentence.sentence}</p>
+                <p style={{width: '70%'}}>{sentence.sentence}</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                     <div>{getMessage(claims)}</div>
                     <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
