@@ -359,3 +359,10 @@ p.subtitle {
 .select__option--is-focused {
   background-color: #f1f8e9;
 }
+
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* space between label and info icon */
+  margin-bottom: 4px;
+}

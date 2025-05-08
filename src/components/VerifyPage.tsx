@@ -336,14 +336,18 @@ function VerifyPage() {
 
             <div className="input-group">
                 <div className="select-group">
-                    <label className="input-label">Select claim types to analyse:</label>
+                    <div className="label-row">
+                        <label className="input-label">Select claim types to analyse:</label>
+                        <span className="info-icon">i
+                            <span className="tooltip">
+                                Only the selected claim types will be analysed and included in the verification report. This can speed up processing but may reduce completeness.
+                            </span>
+                        </span>
+                    </div>
                     <Select
                         options={claimOptions}
                         isMulti
-                        value={claimOptions
-                            .filter(option => claimTypesToAnalyse.includes(option.value))
-                            // We need to keep both 'value' and 'label' properties to display the label in the selected items
-                        }
+                        value={claimOptions.filter(option => claimTypesToAnalyse.includes(option.value))}
                         onChange={(selected) => {
                             const selectedValues = (selected as unknown as { value: ClaimTypes }[]).map(opt => opt.value);
                             setClaimTypesToAnalyse(selectedValues);
@@ -352,51 +356,18 @@ function VerifyPage() {
                         classNamePrefix="select"
                     />
                 </div>
-
-
             </div>
 
+
             {!isLoading &&
-            <button onClick={handleSubmit} className="submit-button">
-                Submit
-            </button>} 
-            {isLoading && 
+                <button onClick={handleSubmit} className="submit-button">
+                    Submit
+                </button>}
+            {isLoading &&
                 <div className="centered-text">
                     <GradientText text="Loading..." state={ClaimTypes.processing} />
                 </div>
             }
-
-            {/* {infoText && (
-                <>
-                    {infoTextState === ClaimTypes.processing ? (
-                        <div className="centered-text">
-                            <GradientText text={infoText} state={infoTextState} />
-                        </div>
-                    ) : (
-                        <div className="centered-text">
-                            <Typewriter text={infoText} />
-                        </div>
-                    )}
-                </>
-            )}
-
-            {sentences.length > 0 && (
-                <>
-                    <h3 className="section-title">Detailed sentence-by-sentence analysis:</h3>
-                    <SentencesComponent
-                        inputSentences={sentences}
-                        onSentencesChange={handleSentencesChange}
-                        typesToAnalyse={claimTypesToAnalyse}
-                        clientId={clientId}
-                    />
-                </>
-            )}
-
-            {!processingInput && (
-                <button onClick={handleFileRequest} className="submit-button">
-                    Generate Report
-                </button>
-            )} */}
         </div>
 
     );
