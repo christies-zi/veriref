@@ -569,12 +569,26 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 onClick={() => setExpanded(!expanded)}
                 style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
             >
-                <p style={{width: '70%'}}>{sentence.sentence}</p>
+                <p style={{ width: '70%' }}>{sentence.sentence}</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                     <div>{getMessage(claims)}</div>
-                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                        ▼
-                    </span>
+                    <svg
+                        className={`dropdown-arrow ${expanded ? 'open' : ''}`}
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                    >
+                        <path
+                            d="M5 7L10 12L15 7"
+                            stroke="#374151"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+
                 </div>
             </div>
             <div className="claim-details" style={{ display: expanded ? 'block' : 'none' }}>
@@ -624,7 +638,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                     </span>
                                                                 )}
                                                                 <strong className="section-title-strong">
-                                                                <Typewriter text={claim.answer} />
+                                                                    <Typewriter text={claim.answer} />
                                                                 </strong>
                                                             </p>
                                                         </div>
@@ -657,7 +671,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                     {claim.otherSourcesConsidered && (
                                                         <div className="claim-section-block claim-explanation-section">
                                                             <p className="claim-explanation">
-                                                            <strong className="section-title-strong">Reference sentences:</strong>
+                                                                <strong className="section-title-strong">Reference sentences:</strong>
                                                                 <span className="info-icon">
                                                                     i
                                                                     <span className="tooltip">
@@ -687,9 +701,23 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                     style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                                 >
                                     <p>Add another source</p>
-                                    <span className={`dropdown-arrow${expanded ? '.open' : ''}`}>
-                                        ▼
-                                    </span>
+                                    <svg
+                                        className={`dropdown-arrow ${isSourceDropdownOpen ? 'open' : ''}`}
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                    >
+                                        <path
+                                            d="M5 7L10 12L15 7"
+                                            stroke="#374151"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+
                                 </div>
                                 {isSourceDropdownOpen && (
                                     <div className="dropdown-content">

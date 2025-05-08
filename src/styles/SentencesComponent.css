@@ -412,10 +412,17 @@ h1 {
 .dropdown-arrow {
   margin-left: 8px;
   font-size: 16px;
+  cursor: pointer;
   transition: transform 0.3s ease;
+  transform-origin: center;
 }
+
 .dropdown-arrow.open {
   transform: rotate(180deg);
+}
+
+.dropdown-arrow:hover path {
+  stroke: #22c55e;
 }
 
 
