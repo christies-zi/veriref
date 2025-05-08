@@ -173,7 +173,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
 
     const getReferenceInfo = (type, references, processingText) => {
         if (type === ClaimTypes.correct)
-            return <><p>Reference sentences:
+            return <><p><strong className="section-title-strong">Reference sentences:</strong>
                 <span className="info-icon">i
                     <span className="tooltip">
                         Based only on the input text which specific setences from this text support the following claim?
@@ -183,7 +183,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         if (type === ClaimTypes.incorrect)
-            return <><p>Reference sentences:
+            return <><p><strong className="section-title-strong">Reference sentences:</strong>
                 <span className="info-icon">i
                     <span className="tooltip">
                         Based only on the input text which specific setences from this text contradict the following claim?
@@ -193,7 +193,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         if (type === ClaimTypes.almostCorrect)
-            return <><p>Reference sentences:
+            return <><p><strong className="section-title-strong">Reference sentences:</strong>
                 <span className="info-icon">i
                     <span className="tooltip">
                         Based only on the input text which specific setences from this text prove that the following claim is almost correct?
@@ -203,7 +203,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                 {references && <Typewriter text={references.toString()} />}
             </p></>
         if (type === ClaimTypes.mightBeCorrect)
-            return <><p>Reference sentences:
+            return <><p><strong className="section-title-strong">Reference sentences:</strong>
                 <span className="info-icon">i
                     <span className="tooltip">
                         Based only on the input text which specific setences from this text prove that the following claim might be correct, but the evidence is controversial?
@@ -616,7 +616,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                                         </span>
                                                                     </span>
                                                                 )}
+                                                                <strong className="section-title-strong">
                                                                 <Typewriter text={claim.answer} />
+                                                                </strong>
                                                             </p>
                                                         </div>
                                                     )}
@@ -624,7 +626,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                     {claim.answer && (
                                                         <div className="claim-section-block claim-explanation-section">
                                                             <p className="claim-explanation">
-                                                                Explanation:
+                                                                <strong className="section-title-strong">Explanation</strong>
                                                                 <span className="info-icon">
                                                                     i
                                                                     <span className="tooltip">{getExplanationInfo(claim.type)}</span>
@@ -646,9 +648,9 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                         )}
 
                                                     {claim.otherSourcesConsidered && (
-                                                        <div className="claim-section-block">
+                                                        <div className="claim-section-block claim-explanation-section">
                                                             <p className="claim-explanation">
-                                                                Other sources found and considered during the online search:
+                                                            <strong className="section-title-strong">Reference sentences:</strong>
                                                                 <span className="info-icon">
                                                                     i
                                                                     <span className="tooltip">
