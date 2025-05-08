@@ -56,36 +56,37 @@ export interface ITypewriterProps {
 }
 
 export default function Typewriter({text, speed = DEFAULT_MS, loop = false, random = DEFAULT_MS, delay = DEFAULT_MS, cursor = true, onFinished = () => {}, onStart = () => {}}: ITypewriterProps) {
-    const formatListString = (input: string): (string | JSX.Element)[] => {
-        return input
-          .split(/(?=\d+\.\s+)/) // Lookahead for enumerated list items
-          .flatMap((part, index) => {
-            const formattedPart = part.split(/(\*\*.*?\*\*|https?:\/\/\S+)/).map((subPart, subIndex) => {
-              if (/^\*\*.*\*\*$/.test(subPart)) {
-                return (
-                  <strong key={`bold-${index}-${subIndex}`}>
-                    {subPart.slice(2, -2)}
-                  </strong>
-                );
-              }
-              
-              if (/^https?:\/\/.+/.test(subPart)) {
-                return (
-                  <a key={`link-${index}-${subIndex}`} href={subPart} target="_blank" rel="noopener noreferrer">
-                    {subPart}
-                  </a>
-                );
-              }
-              
-              return subPart; // Non-bold text and non-links remain as is
-            });
-      
-            if (index > 0) {
-              return [<br key={`br-${index}`} />, ...formattedPart];
-            }
-            return formattedPart;
-          });
-    };
+  const formatListString = (input: string): (string | JSX.Element)[] => {
+    return input
+      .split(/(?:^|\n)(?=\d+\.\s+)/) // Match beginning or newline before list items
+      .flatMap((part, index) => {
+        const formattedPart = part.split(/(\*\*.*?\*\*|https?:\/\/\S+)/).map((subPart, subIndex) => {
+          if (/^\*\*.*\*\*$/.test(subPart)) {
+            return (
+              <strong key={`bold-${index}-${subIndex}`}>
+                {subPart.slice(2, -2)}
+              </strong>
+            );
+          }
+  
+          if (/^https?:\/\/.+/.test(subPart)) {
+            return (
+              <a key={`link-${index}-${subIndex}`} href={subPart} target="_blank" rel="noopener noreferrer">
+                {subPart}
+              </a>
+            );
+          }
+  
+          return subPart;
+        });
+  
+        if (index > 0) {
+          return [<br key={`br-${index}`} />, ...formattedPart];
+        }
+        return formattedPart;
+      });
+  };
+  
 
     const [currentStringIndex, setCurrentStringIndex] = useState(0);
     const [currentTextIndex, setCurrentTextIndex] = useState(0);
