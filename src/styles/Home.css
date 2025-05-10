@@ -3,12 +3,30 @@
     max-width: 80%;
     margin: 0 auto;
     text-align: center;
+    padding: 2% 0;
+}
+
+.hero {
+    margin-bottom: 2em;
+}
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: #555;
+    margin-top: 0.5em;
 }
 
 .button-group {
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: 2em;
 }
 
 .submit-button {
@@ -26,7 +44,7 @@
 }
 
 .submit-button:not(:last-child) {
-    margin-bottom: max(10px, 2%);;
+    margin-bottom: max(10px, 2%);
 }
 
 .submit-button:hover {
@@ -36,8 +54,36 @@
 
 .description {
     max-width: 60%;
-    margin: 5% auto 0 auto;
+    margin: 5% auto 2% auto;
     font-size: 1rem;
     color: #333;
     line-height: 1.5;
 }
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3em;
+}
+
+.feature-card {
+    background-color: #f0fdf4;
+    padding: 1.5em;
+    border-radius: 12px;
+    box-shadow: 0 0.3em 0.8em rgba(34, 197, 94, 0.15);
+    text-align: left;
+}
+
+.feature-card h3 {
+    color: #15803d;
+    margin-bottom: 0.5em;
+    font-size: 1.2rem;
+}
+
+.feature-card p {
+    color: #444;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+

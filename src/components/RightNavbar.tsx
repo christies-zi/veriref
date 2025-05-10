@@ -9,6 +9,7 @@ const RightNavbar: React.FC = () => {
     <nav className="right-navbar">
       <button className="nav-button" onClick={() => navigate('/')}>🏠</button>
       <button className="nav-button" onClick={() => navigate('/verify')}>➕</button>
+      <button className="nav-button" onClick={() => navigate('/help')}>ℹ️</button>
     </nav>
   );
 };

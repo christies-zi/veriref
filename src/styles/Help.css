@@ -1,0 +1,80 @@
+.help-container {
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 2% 0;
+    text-align: left;
+    color: #333;
+    font-family: Arial, sans-serif;
+}
+
+.help-title {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 1em;
+    color: #1a1a1a;
+}
+
+.help-section {
+    margin-bottom: 2.5em;
+}
+
+.help-section h2 {
+    font-size: 1.5rem;
+    color: #15803d;
+    margin-bottom: 0.5em;
+}
+
+.help-section p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0.5em 0;
+}
+
+.example-image {
+    display: block;
+    max-width: 100%;
+    margin: 1em auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.claim-types {
+    list-style: none;
+    padding-left: 0;
+}
+
+.claim-types li {
+    margin: 0.4em 0;
+    font-size: 1rem;
+}
+
+.highlight {
+    font-weight: 600;
+    padding: 0.2em 0.5em;
+    border-radius: 6px;
+    color: white;
+    display: inline-block;
+}
+
+.highlight.red {
+    background-color: #ef4444;
+}
+
+.highlight.yellow {
+    background-color: #facc15;
+    color: #333;
+}
+
+.highlight.dark-green {
+    background-color: #15803d;
+}
+
+.highlight.light-green {
+    background-color: #4ade80;
+    color: #111;
+}
+
+.highlight.orange {
+    background-color: #f97316;
+}

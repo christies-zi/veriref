@@ -55,7 +55,7 @@ const SentencesComponent: React.FC = () => {
   const { setPdfFile, setInputText, inputText, pdfFile } = usePdf();
   const [processing, setProcessing] = useState<boolean>(true);
   const [processingReport, setProcessingReport] = useState<boolean>(false);
-  const isLocal = false;
+  const isLocal = true;
   const BACKEND_SERVER = isLocal ? "http://127.0.0.1:5000" : process.env.REACT_APP_BACKEND_SERVER;
   const [expandAll, setExpandAll] = useState<boolean>(false);
   const [hideAll, setHideAll] = useState<boolean>(false);
