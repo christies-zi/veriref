@@ -40,91 +40,95 @@
 // };
 
 // export default Typewriter;
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DEFAULT_MS = 10;
 
 export interface ITypewriterProps {
-    text: string | undefined | null | string[];
-    speed?: number;
-    loop?: boolean;
-    random?: number;
-    delay?: number;
-    cursor?: boolean;
-    onFinished?: Function;
-    onStart?: Function;
+  text: string | undefined | null | string[];
+  speed?: number;
+  loop?: boolean;
+  random?: number;
+  delay?: number;
+  cursor?: boolean;
+  onFinished?: Function;
+  onStart?: Function;
 }
 
-export default function Typewriter({text, speed = DEFAULT_MS, loop = false, random = DEFAULT_MS, delay = DEFAULT_MS, cursor = true, onFinished = () => {}, onStart = () => {}}: ITypewriterProps) {
+export default function Typewriter({ text, speed = DEFAULT_MS, loop = false, random = DEFAULT_MS, delay = DEFAULT_MS, cursor = true, onFinished = () => { }, onStart = () => { } }: ITypewriterProps) {
   const formatListString = (input: string): (string | JSX.Element)[] => {
-    return input
-      .split(/(?:^|\n)(?=\d+\.\s+)/) // Match beginning or newline before list items
-      .flatMap((part, index) => {
-        const formattedPart = part.split(/(\*\*.*?\*\*|https?:\/\/\S+)/).map((subPart, subIndex) => {
-          if (/^\*\*.*\*\*$/.test(subPart)) {
-            return (
-              <strong key={`bold-${index}-${subIndex}`}>
-                {subPart.slice(2, -2)}
-              </strong>
-            );
-          }
-  
-          if (/^https?:\/\/.+/.test(subPart)) {
-            return (
-              <a key={`link-${index}-${subIndex}`} href={subPart} target="_blank" rel="noopener noreferrer">
-                {subPart}
-              </a>
-            );
-          }
-  
-          return subPart;
-        });
-  
-        if (index > 0) {
-          return [<br key={`br-${index}`} />, ...formattedPart];
+    const listItemRegex = /(?<=^|[\n\r\s])(?=\d{1,2}\.\s+|[-•*]\s+)/g;
+
+    const parts = input.split(listItemRegex).filter(Boolean);
+
+    return parts.flatMap((part, index) => {
+      const content = part.split(/(\*\*.*?\*\*|https?:\/\/\S+)/).map((subPart, subIndex) => {
+        if (/^\*\*.*\*\*$/.test(subPart)) {
+          return (
+            <strong key={`bold-${index}-${subIndex}`}>
+              {subPart.slice(2, -2)}
+            </strong>
+          );
         }
-        return formattedPart;
+
+        if (/^https?:\/\/.+/.test(subPart)) {
+          return (
+            <a key={`link-${index}-${subIndex}`} href={subPart} target="_blank" rel="noopener noreferrer">
+              {subPart}
+            </a>
+          );
+        }
+
+        return subPart;
       });
+
+      if (index > 0) {
+        return [<br key={`br-${index}`} />, ...content];
+      }
+
+      return content;
+    });
   };
-  
 
-    const [currentStringIndex, setCurrentStringIndex] = useState(0);
-    const [currentTextIndex, setCurrentTextIndex] = useState(0);
 
-    if (!text) text = ""
-    if (!Array.isArray(text))
-        text = [text]
 
-    useEffect(() => {
-      if (!text || !text[currentStringIndex]) return;
-  
-      const timeout = setTimeout(() => {
-          if (currentTextIndex === 0) onStart();
-  
-          if (currentTextIndex < text[currentStringIndex].length) {
-              setCurrentTextIndex(currentTextIndex + 1);
-          } else if (currentStringIndex < text.length - 1) {
-              setCurrentTextIndex(0);
-              setCurrentStringIndex(currentStringIndex + 1);
-          } else if (loop) {
-              setCurrentTextIndex(0);
-              setCurrentStringIndex(0);
-          } else {
-              onFinished();
-          }
-      }, speed + Math.random() * random);
-  
-      return () => clearTimeout(timeout);
+  const [currentStringIndex, setCurrentStringIndex] = useState(0);
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+
+  if (!text) text = ""
+  if (!Array.isArray(text))
+    text = [text]
+
+  useEffect(() => {
+    if (!text || !text[currentStringIndex]) return;
+
+    const timeout = setTimeout(() => {
+      if (currentTextIndex === 0) onStart();
+
+      if (currentTextIndex < text[currentStringIndex].length) {
+        setCurrentTextIndex(currentTextIndex + 1);
+      } else if (currentStringIndex < text.length - 1) {
+        setCurrentTextIndex(0);
+        setCurrentStringIndex(currentStringIndex + 1);
+      } else if (loop) {
+        setCurrentTextIndex(0);
+        setCurrentStringIndex(0);
+      } else {
+        onFinished();
+      }
+    }, speed + Math.random() * random);
+
+    return () => clearTimeout(timeout);
   }, [currentTextIndex, currentStringIndex, text]);
-  
 
-    return (
-        <span>
-            {
-                formatListString(text[currentStringIndex].substring(0, currentTextIndex))
-            }
-        </span>
-    );
+
+  return (
+    <span>
+      {
+        formatListString(text[currentStringIndex].substring(0, currentTextIndex))
+      }
+    </span>
+  );
 }
 
 
