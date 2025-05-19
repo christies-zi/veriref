@@ -671,7 +671,7 @@ const SentenceComponent: React.FC<SentenceComponentProps> = ({ sentenceExt, i, o
                                                     {claim.otherSourcesConsidered && (
                                                         <div className="claim-section-block claim-explanation-section">
                                                             <p className="claim-explanation">
-                                                                <strong className="section-title-strong">Reference sentences:</strong>
+                                                                <strong className="section-title-strong">Other sources considered:</strong>
                                                                 <span className="info-icon">
                                                                     i
                                                                     <span className="tooltip">
