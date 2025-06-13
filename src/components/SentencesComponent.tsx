@@ -352,6 +352,14 @@ const SentencesComponent: React.FC = () => {
                   <button className='button'
                     onClick={() => setHideAll(!hideAll)}>Hide All</button>
                 </div>
+
+                <div> 
+                  <div style={{marginBottom: '30px'}}>
+                    <div className="centered-text">
+                      <Typewriter text={"Note: VeriRef can make mistakes. The results produced should not be treated as ground truth. Always read and critically asses the explanations. We do not review the automatically retrieved sources and hold no responsibility over the content and opinions presented in them."} />
+                    </div>
+                  </div>
+                </div>
               </>
             )}
             <div className="claims-container">
